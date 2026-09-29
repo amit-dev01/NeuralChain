@@ -124,7 +124,51 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* ── Minimalist Editorial Theme Utilities (Relating to Landing Page) ── */
+.font-display {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+.editorial-header {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.editorial-surface {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.editorial-surface-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.editorial-surface-hover:hover {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+}
+
+.editorial-glow {
+  position: relative;
+}
+.editorial-glow::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 20%;
+  right: 20%;
+  height: 80px;
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.12), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ── Legacy landing page styles (keep existing) ── */

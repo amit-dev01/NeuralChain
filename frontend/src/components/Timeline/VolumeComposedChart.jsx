@@ -133,26 +133,26 @@ export default function VolumeComposedChart() {
   }, [startIndex, endIndex])
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl space-y-3">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-3">
       {/* Chart Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+            <h2 className="font-display text-xl font-normal text-white tracking-tight flex items-center gap-2">
               <Activity className="h-4 w-4 text-blue-400" />
               Transaction Volume & Anomaly Events
             </h2>
-            <Badge variant="blue" className="text-[11px] h-5 px-2">
+            <Badge variant="blue" className="text-[10px] h-5 px-2 rounded-full">
               syncId: timeline
             </Badge>
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-400 font-light">
             Real-time multi-resolution transaction throughput and flagged volume with interactive brush zoom
           </p>
         </div>
 
         {/* Selected window metrics summary */}
-        <div className="flex items-center gap-3 bg-zinc-950/80 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs">
+        <div className="flex items-center gap-3 bg-slate-950/80 px-3.5 py-1.5 rounded-full border border-white/10 text-xs">
           <div className="text-zinc-400">
             Window:{" "}
             <span className="font-mono text-zinc-200 font-semibold">

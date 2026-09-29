@@ -3,18 +3,11 @@ import { Link } from "react-router-dom"
 import {
   FileText,
   ChevronRight,
-  LayoutDashboard,
-  Upload,
-  GitFork,
-  Bell,
-  Clock,
-  Map,
   CheckCircle2,
-  Sparkles,
   Loader2,
-  Download,
 } from "lucide-react"
 
+import AppHeader from "@/components/common/AppHeader"
 import {
   Dialog,
   DialogContent,
@@ -36,16 +29,6 @@ import {
   generateGraphJson,
   generateRawTransactionsCsv,
 } from "@/data/reportsMockData"
-
-const NAV_LINKS = [
-  { label: "Dashboard", to: "/overview", icon: LayoutDashboard },
-  { label: "Ingest",    to: "/ingest",   icon: Upload          },
-  { label: "Graph",     to: "/graph",    icon: GitFork         },
-  { label: "Alerts",    to: "/alerts",   icon: Bell            },
-  { label: "Timeline",  to: "/timeline", icon: Clock           },
-  { label: "GeoMap",    to: "/geomap",   icon: Map             },
-  { label: "Reports",   to: "/reports",  icon: FileText        },
-]
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REPORTS & EXPORT PAGE
@@ -199,107 +182,63 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 editorial-glow selection:bg-amber-500/20 flex flex-col">
       {/* ── TOAST NOTIFICATION ── */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-[9999] bg-zinc-900 border border-emerald-500/50 rounded-xl px-4 py-2.5 text-xs text-emerald-300 shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
+        <div className="fixed top-5 right-5 z-[9999] editorial-surface border border-emerald-500/40 rounded-full px-5 py-2.5 text-xs text-emerald-300 shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
+          <span className="font-sans font-medium">{toastMessage}</span>
         </div>
       )}
 
       {/* ── GENERATION PROGRESS MODAL ── */}
       <Dialog open={isGenerating} onOpenChange={setIsGenerating}>
-        <DialogContent className="max-w-md bg-zinc-900 border-zinc-700">
+        <DialogContent className="max-w-md editorial-surface border-white/10 rounded-2xl text-slate-100 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-              Generating Investigation Report
+            <DialogTitle className="text-base font-display font-medium text-white flex items-center gap-2.5">
+              <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />
+              Generating Investigation Dossier
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-400">
-              Assembling analytical charts, SHAP values, and network evidence...
+              Assembling analytical charts, SHAP values, and cryptographically verified network evidence...
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-3">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-zinc-300 font-medium">{progressStage}</span>
-              <span className="text-blue-400 font-bold">{progressVal}%</span>
+              <span className="text-amber-400 font-bold">{progressVal}%</span>
             </div>
-            <Progress value={progressVal} className="h-2 bg-zinc-800" />
+            <Progress value={progressVal} className="h-2 bg-slate-900" />
             <div className="text-[11px] text-zinc-500 italic">
-              Estimated export size: ~4.2 MB • Confidential cryptographic hash attached
+              Estimated export size: ~4.2 MB • NTRO forensic hash & signature attached
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── STICKY TOPBAR HEADER ── */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
-        <div className="mx-auto max-w-screen-2xl px-6 h-14 flex items-center gap-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="font-mono text-lg font-bold text-amber-400 tracking-tight">
-              SIH26146
-            </span>
-            <span className="hidden sm:block text-xs text-zinc-500 border border-zinc-700 rounded px-1.5 py-0.5">
-              NeuralChain
-            </span>
-          </Link>
-
-          {/* Nav links */}
-          <nav className="hidden md:flex items-center gap-1 flex-1" aria-label="Main navigation">
-            {NAV_LINKS.map(({ label, to, icon: Icon }) => {
-              const isActive = to === "/reports"
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-zinc-800 text-zinc-100"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* System Status badge */}
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-xs text-zinc-400 hidden sm:block">
-              All Systems Operational
-            </span>
-          </div>
-        </div>
-      </header>
+      {/* ── STICKY APP HEADER ── */}
+      <AppHeader />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="mx-auto max-w-screen-2xl w-full px-6 py-6 space-y-8 flex-1">
+      <main className="mx-auto max-w-screen-2xl w-full px-6 py-8 space-y-8 flex-1">
         {/* ── PAGE HEADER ── */}
         <div className="space-y-1">
-          <nav className="flex items-center gap-1.5 text-xs text-zinc-500">
-            <Link to="/overview" className="hover:text-zinc-300 transition-colors">
+          <nav className="flex items-center gap-2 text-xs text-zinc-400">
+            <Link to="/overview" className="hover:text-amber-400 transition-colors">
               Dashboard
             </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-300 font-medium">Reports</span>
+            <ChevronRight className="h-3 w-3 text-zinc-600" />
+            <span className="text-zinc-200 font-medium">Reports</span>
           </nav>
           <div className="flex items-center justify-between flex-wrap gap-4 pt-1">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2.5 text-zinc-100">
-                <FileText className="h-6 w-6 text-blue-400" />
-                Reports & Export
+              <h1 className="text-3xl sm:text-4xl font-display font-medium text-white tracking-tight flex items-center gap-3">
+                <FileText className="h-7 w-7 text-amber-400" />
+                Reports & <span className="font-serif italic text-zinc-400 font-light">Export Intelligence</span>
               </h1>
-              <p className="text-sm text-zinc-400 mt-1">
-                Generate detailed investigative reports for selected alerts, entities, or time periods. Export as PDF or CSV.
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl font-light">
+                Generate detailed investigative dossiers for selected alerts, entities, or time periods. Export court-ready PDF briefs or raw analytical CSVs.
               </p>
             </div>
           </div>

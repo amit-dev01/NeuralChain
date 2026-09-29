@@ -90,20 +90,20 @@ export default function RapidReuseTable() {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl space-y-4">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-4">
       {/* ── HEADER ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+          <h2 className="font-display text-xl font-normal text-white tracking-tight flex items-center gap-2">
             <Zap className="h-4 w-4 text-amber-400" />
             IP Address Rapid Reuse Events
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5 font-light">
             Same IP signing transactions for multiple distinct wallets within concentrated time windows
           </p>
         </div>
 
-        <Badge variant="amber" className="text-xs">
+        <Badge variant="amber" className="text-[10px] rounded-full px-2.5 py-0.5">
           {RAPID_REUSE_DATA.length} Anomalous IP Clusters
         </Badge>
       </div>

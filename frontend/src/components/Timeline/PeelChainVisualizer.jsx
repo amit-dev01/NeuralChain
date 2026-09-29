@@ -205,21 +205,21 @@ export default function PeelChainVisualizer() {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl space-y-4">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-4">
       {/* ── HEADER ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+          <h2 className="font-display text-xl font-normal text-white tracking-tight flex items-center gap-2">
             <GitBranch className="h-4 w-4 text-violet-400" />
             Detected Peel Chains
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5 font-light">
             Sequential single-output transactions chained across time to obfuscate fund flow
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="violet" className="text-xs">
+          <Badge variant="violet" className="text-[10px] rounded-full px-2.5 py-0.5">
             {PEEL_CHAINS.length} Chains Detected
           </Badge>
           <span className="text-[11px] text-zinc-500 font-mono hidden sm:inline">

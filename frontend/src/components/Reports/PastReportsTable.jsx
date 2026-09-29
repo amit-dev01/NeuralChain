@@ -40,28 +40,28 @@ export default function PastReportsTable({
   const [reportToDelete, setReportToDelete] = useState(null)
 
   return (
-    <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 shadow-xl space-y-4">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-4">
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-blue-400" />
-            Generated Reports History
+          <h2 className="text-lg font-display font-medium text-white flex items-center gap-2">
+            <Clock className="h-4 w-4 text-amber-400" />
+            Generated Reports Archive
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Archive of previously generated investigation dossiers and data dumps
+          <p className="text-xs text-zinc-400 mt-0.5 font-light">
+            Archive of previously generated investigation dossiers and forensic data dumps
           </p>
         </div>
-        <Badge variant="blue" className="text-xs">
+        <div className="text-xs font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
           {reports.length} Reports Archived
-        </Badge>
+        </div>
       </div>
 
       {/* ── TABLE ── */}
-      <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/60">
+      <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-950/60">
         <Table>
-          <TableHeader className="bg-zinc-950/80">
-            <TableRow className="border-b border-zinc-800 hover:bg-transparent">
+          <TableHeader className="bg-slate-950/80">
+            <TableRow className="border-b border-white/10 hover:bg-transparent">
               <TableHead className="text-xs text-zinc-400 font-medium">Report Title</TableHead>
               <TableHead className="text-xs text-zinc-400 font-medium">Type</TableHead>
               <TableHead className="text-xs text-zinc-400 font-medium">Date Generated</TableHead>
@@ -71,15 +71,15 @@ export default function PastReportsTable({
               <TableHead className="text-xs text-zinc-400 font-medium text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-zinc-800/60">
+          <TableBody className="divide-y divide-white/5">
             {reports.map((rep) => (
               <TableRow
                 key={rep.id}
-                className="hover:bg-zinc-800/30 transition-colors group"
+                className="hover:bg-white/5 transition-colors group"
               >
                 {/* Title & ID */}
                 <TableCell className="py-3 px-4">
-                  <div className="font-semibold text-xs text-zinc-200 group-hover:text-blue-400 transition-colors">
+                  <div className="font-semibold text-xs text-zinc-200 group-hover:text-amber-400 transition-colors">
                     {rep.title}
                   </div>
                   <div className="text-[10px] text-zinc-500 font-mono">
@@ -99,19 +99,22 @@ export default function PastReportsTable({
 
                 {/* Alerts Included */}
                 <TableCell className="py-3 px-4 text-center">
-                  <Badge variant="amber" className="text-[10px] h-5 font-mono">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
                     {rep.alertsIncluded} alerts
-                  </Badge>
+                  </span>
                 </TableCell>
 
                 {/* Format */}
                 <TableCell className="py-3 px-4 text-center">
-                  <Badge
-                    variant={rep.format === "PDF" ? "red" : "blue"}
-                    className="text-[10px] h-5 font-mono uppercase"
+                  <span
+                    className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full ${
+                      rep.format === "PDF"
+                        ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                        : "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                    }`}
                   >
                     {rep.format}
-                  </Badge>
+                  </span>
                 </TableCell>
 
                 {/* Size */}
@@ -125,7 +128,7 @@ export default function PastReportsTable({
                     {/* Preview Button */}
                     <button
                       onClick={() => onPreviewReport(rep)}
-                      className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors"
+                      className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-amber-400 transition-colors"
                       title="Preview this report"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -134,7 +137,7 @@ export default function PastReportsTable({
                     {/* Download Button */}
                     <button
                       onClick={() => onDownloadReport(rep)}
-                      className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition-colors"
+                      className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-emerald-400 transition-colors"
                       title="Download file"
                     >
                       <Download className="h-3.5 w-3.5" />
@@ -145,23 +148,23 @@ export default function PastReportsTable({
                       <AlertDialogTrigger asChild>
                         <button
                           onClick={() => setReportToDelete(rep)}
-                          className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
+                          className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-rose-400 transition-colors"
                           title="Delete report"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="editorial-surface border-white/10 rounded-2xl text-slate-100 shadow-2xl">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>
+                          <AlertDialogTitle className="font-display text-lg text-white">
                             Delete Report {reportToDelete?.id}?
                           </AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <AlertDialogDescription className="text-zinc-400 text-xs">
                             Are you sure you want to permanently remove "{reportToDelete?.title}" from the generated reports archive?
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setReportToDelete(null)}>
+                          <AlertDialogCancel onClick={() => setReportToDelete(null)} className="rounded-full border-white/10 text-zinc-300 hover:bg-white/5">
                             Cancel
                           </AlertDialogCancel>
                           <AlertDialogAction
@@ -171,7 +174,7 @@ export default function PastReportsTable({
                                 setReportToDelete(null)
                               }
                             }}
-                            className="bg-red-600 hover:bg-red-500 text-white"
+                            className="bg-rose-600 hover:bg-rose-500 text-white rounded-full font-medium"
                           >
                             Delete
                           </AlertDialogAction>

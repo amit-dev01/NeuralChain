@@ -60,14 +60,14 @@ export default function GeoMapControls({
   }, [])
 
   return (
-    <aside className="w-80 shrink-0 bg-zinc-900/95 border-r border-zinc-800 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+    <aside className="w-80 shrink-0 bg-slate-950/85 backdrop-blur-xl border-r border-white/10 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-slate-950">
       {/* ── SECTION HEADER ── */}
-      <div className="p-4 border-b border-zinc-800 bg-zinc-950/60 sticky top-0 z-10 backdrop-blur">
-        <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+      <div className="p-4 border-b border-white/5 bg-slate-950/80 sticky top-0 z-10 backdrop-blur">
+        <h2 className="font-display text-base font-normal text-white flex items-center gap-2 tracking-tight">
           <SlidersHorizontal className="h-4 w-4 text-blue-400" />
           Map Controls
         </h2>
-        <p className="text-[11px] text-zinc-400 mt-0.5">
+        <p className="text-[11px] text-zinc-400 mt-0.5 font-light">
           Layers, risk thresholds, and origin filtering
         </p>
       </div>
@@ -79,7 +79,7 @@ export default function GeoMapControls({
             Display Layers
           </span>
 
-          <div className="space-y-2.5 bg-zinc-950/70 p-3 rounded-xl border border-zinc-800">
+          <div className="space-y-2.5 bg-slate-900/80 p-3.5 rounded-xl border border-white/10">
             {/* IP Heatmap */}
             <div className="flex items-center justify-between">
               <Label

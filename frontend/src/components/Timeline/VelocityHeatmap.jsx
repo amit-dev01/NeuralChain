@@ -49,21 +49,21 @@ export default function VelocityHeatmap() {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl space-y-4 relative">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-4 relative">
       {/* ── HEADER & COLOR SCALE LEGEND ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+          <h2 className="font-display text-xl font-normal text-white tracking-tight flex items-center gap-2">
             <Flame className="h-4 w-4 text-amber-500" />
             Transaction Velocity Heatmap (Hour × Day)
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5 font-light">
             Hourly transaction density distribution across the weekly cycle (7 Days × 24 Hours)
           </p>
         </div>
 
         {/* Color scale legend on the right side: zinc-900 → blue-500 → amber-500 → red-500 */}
-        <div className="flex items-center gap-3 bg-zinc-950/80 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs">
+        <div className="flex items-center gap-3 bg-slate-950/80 px-3.5 py-1.5 rounded-full border border-white/10 text-xs">
           <span className="text-zinc-500 text-[11px] font-medium">Density:</span>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] text-zinc-400">0 tx</span>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import AppHeader from "@/components/common/AppHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -283,14 +284,14 @@ export default function IngestPage() {
   const fileExt = file?.name?.split(".").pop()?.toLowerCase()
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 editorial-glow selection:bg-amber-500/20">
 
       {/* ── TOAST ── */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 rounded-xl px-5 py-3 text-sm shadow-2xl border transition-all
+        <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 rounded-2xl px-5 py-3 text-sm shadow-2xl border backdrop-blur-xl transition-all
           ${toast.type === "error"
-            ? "bg-zinc-900 border-red-500/50 text-red-300"
-            : "bg-zinc-900 border-emerald-500/50 text-emerald-300"}`}>
+            ? "bg-slate-900/90 border-red-500/50 text-red-300"
+            : "bg-slate-900/90 border-emerald-500/50 text-emerald-300"}`}>
           {toast.type === "error"
             ? <X className="h-4 w-4 text-red-400" />
             : <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
@@ -298,50 +299,23 @@ export default function IngestPage() {
         </div>
       )}
 
-      {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
-        <div className="mx-auto max-w-screen-2xl px-6 h-14 flex items-center gap-6">
-          <Link to="/" className="font-mono text-lg font-bold text-amber-400">SIH26146</Link>
-          <nav className="hidden md:flex items-center gap-1">
-            {[
-              ["Dashboard","/overview"],
-              ["Ingest","/ingest"],
-              ["Graph","/graph"],
-              ["Alerts","/alerts"],
-              ["Timeline","/timeline"],
-              ["GeoMap","/geomap"],
-              ["Reports","/reports"],
-            ].map(([l,t]) => (
-              <Link key={t} to={t}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
-                  ${t === "/ingest" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}>
-                {l}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-xs text-zinc-400 hidden sm:block">All Systems Operational</span>
-          </div>
-        </div>
-      </header>
+      {/* ── UNIFIED APP HEADER ── */}
+      <AppHeader />
 
       <main className="mx-auto max-w-screen-xl px-6 py-8 space-y-8">
 
         {/* ── BREADCRUMB + TITLE ── */}
-        <div>
-          <nav className="flex items-center gap-1.5 text-xs text-zinc-500 mb-3" aria-label="Breadcrumb">
-            <Link to="/overview" className="hover:text-zinc-300 transition-colors">Dashboard</Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-300">Ingest</span>
+        <div className="pb-2 border-b border-white/5">
+          <nav className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2" aria-label="Breadcrumb">
+            <Link to="/overview" className="hover:text-white transition-colors">Dashboard</Link>
+            <ChevronRight className="h-3 w-3 text-zinc-600" />
+            <span className="text-zinc-200 font-medium">Ingest</span>
           </nav>
-          <h1 className="text-2xl font-bold text-zinc-100">Upload Transaction Dataset</h1>
-          <p className="text-sm text-zinc-400 mt-1 max-w-xl">
-            Accepts CSV, JSON, or XML bulk files. Schema is validated automatically.
-            Duplicates are deduplicated by TXID.
+          <h1 className="font-display text-3xl sm:text-4xl font-normal text-white tracking-tight">
+            Upload Transaction <span className="font-serif italic text-zinc-400 font-light">Dataset</span>
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1 max-w-xl font-light tracking-wide">
+            Accepts CSV, JSON, or XML bulk files. Schema is validated automatically. Duplicates are deduplicated by TXID.
           </p>
         </div>
 
@@ -350,74 +324,85 @@ export default function IngestPage() {
           {/* ══════════════════════════════════════════════════════════
               SECTION 1: DROP ZONE
           ══════════════════════════════════════════════════════════ */}
-          <Card>
-            <CardContent className="pt-6">
-              {/* Drop zone */}
-              <div
-                {...getRootProps()}
-                className={`min-h-64 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 p-8
-                  ${isDragActive
-                    ? "border-blue-500 bg-blue-500/5 scale-[1.01]"
-                    : "border-zinc-600 bg-zinc-900 hover:border-blue-500/60 hover:bg-zinc-800/60"}`}
-              >
-                <input {...getInputProps()} />
-                <UploadCloud className={`h-12 w-12 transition-colors ${isDragActive ? "text-blue-400" : "text-zinc-500"}`} />
-                <div className="text-center space-y-1">
-                  <p className="text-lg font-medium text-zinc-200">
-                    {isDragActive ? "Drop it here!" : "Drag & drop your file here"}
-                  </p>
-                  <p className="text-sm text-zinc-500">or</p>
-                </div>
-                <Button type="button" variant="outline" size="sm" className="pointer-events-none">
-                  Browse Files
-                </Button>
-                <p className="text-xs text-zinc-600 mt-2">.csv &nbsp; .json &nbsp; .xml — max 500 MB</p>
+          <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl overflow-hidden p-6">
+            <div
+              {...getRootProps()}
+              className={`min-h-64 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 p-8
+                ${isDragActive
+                  ? "border-blue-500 bg-blue-500/10 scale-[1.01]"
+                  : "border-white/15 bg-slate-900/60 hover:border-blue-400/60 hover:bg-slate-900/90"}`}
+            >
+              <input {...getInputProps()} />
+              <div className="h-16 w-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                <UploadCloud className={`h-8 w-8 transition-colors ${isDragActive ? "text-blue-400" : "text-blue-400/80"}`} />
               </div>
+              <div className="text-center space-y-1">
+                <p className="text-base font-medium text-zinc-200">
+                  {isDragActive ? "Drop file now" : "Drag & drop your transaction dataset here"}
+                </p>
+                <p className="text-xs text-zinc-500 font-light">or click to browse from system</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-full px-5 py-2 text-xs font-medium text-zinc-300 bg-white/5 border border-white/15 hover:bg-white/10 hover:border-white/30 transition-all pointer-events-none"
+              >
+                Browse Files
+              </button>
+              <p className="text-[11px] text-zinc-500 font-mono mt-1">.csv &nbsp; · &nbsp; .json &nbsp; · &nbsp; .xml — max 500 MB</p>
+            </div>
 
-              {/* Selected file card */}
-              {file && (
-                <div className="mt-4 flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3">
-                  <FileText className="h-5 w-5 text-zinc-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-200 truncate">{file.name}</p>
-                    <p className="text-xs text-zinc-500">{formatBytes(file.size)}</p>
-                  </div>
-                  <TypeBadge ext={fileExt} />
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setFile(null) }}
-                    className="p-1 rounded-md hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors"
-                    aria-label="Remove file"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+            {/* Selected file card */}
+            {file && (
+              <div className="mt-4 flex items-center gap-3 bg-slate-900/90 border border-white/15 rounded-xl px-4 py-3 shadow-lg">
+                <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 text-blue-400" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-zinc-200 truncate">{file.name}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">{formatBytes(file.size)}</p>
+                </div>
+                <TypeBadge ext={fileExt} />
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setFile(null) }}
+                  className="p-1.5 rounded-lg hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors"
+                  aria-label="Remove file"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* ══════════════════════════════════════════════════════════
               SECTION 2: CONFIGURATION OPTIONS
           ══════════════════════════════════════════════════════════ */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Database className="h-4 w-4 text-blue-400" />
-                Upload Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl p-6">
+            <div className="pb-4 mb-6 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-7 w-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                  <Database className="h-4 w-4 text-blue-400" />
+                </div>
+                <h2 className="font-display text-xl font-normal text-white tracking-tight">
+                  Upload Configuration
+                </h2>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500">PARAM_CONFIG</span>
+            </div>
+
+            <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* Left column */}
                 <div className="space-y-5">
                   {/* Dataset Label */}
                   <div className="space-y-2">
-                    <Label htmlFor="label">Dataset Label</Label>
+                    <Label htmlFor="label" className="text-xs text-zinc-400 uppercase tracking-wider">Dataset Label</Label>
                     <Input
                       id="label"
                       placeholder="e.g. BTC_dump_2025_Q2"
                       {...register("label")}
+                      className="bg-slate-900/80 border-white/10 text-white focus:border-blue-500/60 rounded-xl"
                     />
                     {errors.label && (
                       <p className="text-xs text-red-400">{errors.label.message}</p>
@@ -426,16 +411,16 @@ export default function IngestPage() {
 
                   {/* Source Type */}
                   <div className="space-y-2">
-                    <Label>Source Type</Label>
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider">Source Type</Label>
                     <Controller
                       name="sourceType"
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-slate-900/80 border-white/10 text-white rounded-xl">
                             <SelectValue placeholder="Select source type…" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-slate-900 border-white/10">
                             <SelectItem value="mempool">Raw Bitcoin Mempool</SelectItem>
                             <SelectItem value="exchange">Exchange Export</SelectItem>
                             <SelectItem value="osint">OSINT Feed</SelectItem>
@@ -451,16 +436,16 @@ export default function IngestPage() {
 
                   {/* Timestamp Format */}
                   <div className="space-y-2">
-                    <Label>Timestamp Format</Label>
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider">Timestamp Format</Label>
                     <Controller
                       name="timestampFormat"
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-slate-900/80 border-white/10 text-white rounded-xl">
                             <SelectValue placeholder="Select format…" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-slate-900 border-white/10">
                             <SelectItem value="iso8601">ISO 8601</SelectItem>
                             <SelectItem value="unix_ms">Unix Epoch (ms)</SelectItem>
                             <SelectItem value="unix_s">Unix Epoch (s)</SelectItem>
@@ -473,32 +458,32 @@ export default function IngestPage() {
                 </div>
 
                 {/* Right column: Switches */}
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <Controller name="deduplicate" control={control} render={({ field }) => (
-                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
+                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-slate-900/80 border border-white/10 hover:border-white/20 transition-all">
                       <div>
-                        <p className="text-sm font-medium text-zinc-200">Deduplication</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">Remove duplicate TXIDs</p>
+                        <p className="text-xs font-semibold text-zinc-200">Deduplication</p>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">Filter duplicate transactions by TXID hash</p>
                       </div>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>
                   )} />
 
                   <Controller name="geoip" control={control} render={({ field }) => (
-                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
+                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-slate-900/80 border border-white/10 hover:border-white/20 transition-all">
                       <div>
-                        <p className="text-sm font-medium text-zinc-200">GeoIP Enrichment</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">Uses MaxMind GeoLite2 offline DB</p>
+                        <p className="text-xs font-semibold text-zinc-200">GeoIP Enrichment</p>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">Uses MaxMind GeoLite2 offline database</p>
                       </div>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>
                   )} />
 
                   <Controller name="autoRunML" control={control} render={({ field }) => (
-                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50">
+                    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-slate-900/80 border border-white/10 hover:border-white/20 transition-all">
                       <div>
-                        <p className="text-sm font-medium text-zinc-200">Auto-run ML after ingest</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">Queues all 4 models in Celery after parsing</p>
+                        <p className="text-xs font-semibold text-zinc-200">Auto-run ML inference</p>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">Queue all 4 models in Celery immediately</p>
                       </div>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>
@@ -508,33 +493,37 @@ export default function IngestPage() {
 
               {/* Submit button */}
               <div className="mt-8 flex justify-end">
-                <Button
+                <button
                   type="submit"
-                  size="lg"
                   disabled={mutation.isPending || uploadPhase === "running"}
-                  className="gap-2 bg-blue-600 hover:bg-blue-500 text-white"
+                  className="flex items-center gap-2.5 px-8 py-3 rounded-full text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 hover:scale-105"
                 >
                   {mutation.isPending || uploadPhase === "running"
                     ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
-                    : <><UploadCloud className="h-4 w-4" /> Start Ingestion</>}
-                </Button>
+                    : <><UploadCloud className="h-4 w-4" /> Start Ingestion Pipeline</>}
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </form>
 
         {/* ══════════════════════════════════════════════════════════
             SECTION 3: UPLOAD PROGRESS
         ══════════════════════════════════════════════════════════ */}
         {uploadPhase && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
+          <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl p-6">
+            <div className="pb-4 mb-4 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
                 <Loader2 className={`h-4 w-4 ${uploadPhase === "running" ? "animate-spin text-blue-400" : "text-emerald-400"}`} />
-                {uploadPhase === "done" ? "Ingestion Complete" : "Ingestion In Progress"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+                <h2 className="font-display text-xl font-normal text-white tracking-tight">
+                  {uploadPhase === "done" ? "Ingestion Complete" : "Ingestion In Progress"}
+                </h2>
+              </div>
+              <span className="font-mono text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+                {progress}%
+              </span>
+            </div>
+            <div className="space-y-6">
 
               {/* Stepper */}
               <Stepper currentStep={currentStep} />
@@ -551,7 +540,7 @@ export default function IngestPage() {
               {/* Log terminal */}
               <div
                 ref={logRef}
-                className="bg-black rounded-xl border border-zinc-800 p-4 h-40 overflow-y-scroll font-mono text-xs text-green-400 space-y-0.5"
+                className="bg-slate-950/95 rounded-xl border border-white/10 p-4 h-44 overflow-y-scroll font-mono text-xs text-emerald-400 space-y-1 shadow-inner"
                 aria-live="polite"
                 aria-label="Ingestion log"
               >
@@ -559,11 +548,11 @@ export default function IngestPage() {
                   <p key={i}>{line}</p>
                 ))}
                 {uploadPhase === "running" && (
-                  <p className="text-green-600 animate-pulse">▌</p>
+                  <p className="text-emerald-500 animate-pulse">▌</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════
@@ -573,22 +562,23 @@ export default function IngestPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Schema check table */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Schema Validation</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+            <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl overflow-hidden">
+              <div className="p-5 border-b border-white/5 flex items-center justify-between">
+                <h2 className="font-display text-xl font-normal text-white tracking-tight">Schema Validation</h2>
+                <span className="text-[10px] font-mono text-zinc-500">8 FIELDS</span>
+              </div>
+              <div className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Column</TableHead>
-                      <TableHead>Expected Type</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
+                    <TableRow className="border-b border-white/5 hover:bg-transparent">
+                      <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Column</TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Expected Type</TableHead>
+                      <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400 text-center">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {SCHEMA_FIELDS.map((row) => (
-                      <TableRow key={row.field}>
+                      <TableRow key={row.field} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                         <TableCell>
                           <code className="font-mono text-xs text-zinc-300">{row.field}</code>
                         </TableCell>
@@ -605,15 +595,16 @@ export default function IngestPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Summary stats */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Ingestion Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl p-6">
+              <div className="pb-4 mb-4 border-b border-white/5 flex items-center justify-between">
+                <h2 className="font-display text-xl font-normal text-white tracking-tight">Ingestion Summary</h2>
+                <span className="text-[10px] font-mono text-emerald-400">STATUS: VERIFIED</span>
+              </div>
+              <div>
                 <div className="space-y-3">
                   {[
                     ["Total rows parsed",         "10,000",  "text-zinc-200"],
@@ -623,44 +614,49 @@ export default function IngestPage() {
                     ["Duplicate TXIDs removed",    "142",     "text-amber-400"],
                     ["IPs enriched via GeoIP",     "9,441",   "text-blue-400"],
                   ].map(([label, val, color]) => (
-                    <div key={label} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
-                      <span className="text-sm text-zinc-400">{label}</span>
-                      <span className={`text-sm font-semibold font-mono ${color}`}>{val}</span>
+                    <div key={label} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
+                      <span className="text-xs text-zinc-400">{label}</span>
+                      <span className={`text-xs font-semibold font-mono ${color}`}>{val}</span>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════
             SECTION 5: PAST UPLOADS TABLE
         ══════════════════════════════════════════════════════════ */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Database className="h-4 w-4 text-zinc-400" />
-              Previously Ingested Datasets
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <div className="editorial-surface rounded-2xl border border-white/10 shadow-xl overflow-hidden">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                <Database className="h-4 w-4 text-zinc-400" />
+              </div>
+              <h2 className="font-display text-xl font-normal text-white tracking-tight">
+                Previously Ingested Datasets
+              </h2>
+            </div>
+            <span className="text-xs text-zinc-400 font-mono">{pastUploads.length} archives</span>
+          </div>
+          <div className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Label</TableHead>
-                  <TableHead>File Type</TableHead>
-                  <TableHead>Rows</TableHead>
-                  <TableHead>Uploaded At</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-b border-white/5 hover:bg-transparent">
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Label</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">File Type</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Rows</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Uploaded At</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400">Status</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-400 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pastUploads.map((u) => (
-                  <TableRow key={u.id}>
+                  <TableRow key={u.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                     <TableCell>
-                      <span className="font-mono text-xs text-zinc-300">{u.label}</span>
+                      <span className="font-mono text-xs text-zinc-300 bg-slate-900/90 border border-white/10 px-2 py-0.5 rounded-md">{u.label}</span>
                     </TableCell>
                     <TableCell>
                       <TypeBadge ext={u.type.toLowerCase()} />
@@ -668,9 +664,9 @@ export default function IngestPage() {
                     <TableCell className="text-xs text-zinc-300 tabular-nums">
                       {u.rows.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-xs text-zinc-500">{u.uploaded}</TableCell>
+                    <TableCell className="text-xs text-zinc-500 font-mono">{u.uploaded}</TableCell>
                     <TableCell>
-                      <Badge variant="green">
+                      <Badge variant="green" className="rounded-full px-2.5 py-0.5 text-[10px]">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Stored
                       </Badge>
@@ -682,7 +678,7 @@ export default function IngestPage() {
                           size="icon"
                           onClick={() => navigate("/graph")}
                           title="View in Graph"
-                          className="h-8 w-8 text-zinc-400 hover:text-blue-400"
+                          className="h-8 w-8 text-zinc-400 hover:text-blue-400 rounded-full"
                         >
                           <Network className="h-4 w-4" />
                         </Button>
@@ -693,21 +689,21 @@ export default function IngestPage() {
                               variant="ghost"
                               size="icon"
                               title="Delete dataset"
-                              className="h-8 w-8 text-zinc-400 hover:text-red-400"
+                              className="h-8 w-8 text-zinc-400 hover:text-red-400 rounded-full"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="bg-slate-900 border-white/15">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Dataset?</AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogTitle className="font-display text-xl text-white">Delete Dataset?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-zinc-400">
                                 This will permanently remove <span className="font-mono text-zinc-300">"{u.label}"</span> and all associated graph nodes. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(u.id)}>
+                              <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(u.id)} className="rounded-full bg-red-600 hover:bg-red-500">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -719,8 +715,8 @@ export default function IngestPage() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
       </main>
     </div>

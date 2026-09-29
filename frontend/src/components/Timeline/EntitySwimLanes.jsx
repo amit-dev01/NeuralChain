@@ -76,21 +76,21 @@ export default function EntitySwimLanes() {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl space-y-4">
+    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-xl space-y-4">
       {/* ── HEADER ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/5">
         <div>
-          <h2 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+          <h2 className="font-display text-xl font-normal text-white tracking-tight flex items-center gap-2">
             <Users className="h-4 w-4 text-violet-400" />
             Entity Activity Over Time
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5 font-light">
             Each row = one high-risk wallet or IP entity • Synchronized with volume timeline
           </p>
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 bg-zinc-950/80 px-3 py-1.5 rounded-lg border border-zinc-800 text-xs">
+        <div className="flex flex-wrap items-center gap-3 bg-slate-950/80 px-3.5 py-1.5 rounded-full border border-white/10 text-xs">
           <span className="text-zinc-500 text-[11px] font-medium">Risk Score:</span>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />

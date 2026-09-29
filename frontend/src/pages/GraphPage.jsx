@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
+import AppHeader from "@/components/common/AppHeader"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -580,36 +581,16 @@ export default function GraphPage() {
         />
       )}
 
-      {/* ── HEADER ── */}
-      <header className="shrink-0 h-14 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md flex items-center px-6 gap-6 z-50">
-        <Link to="/" className="font-mono text-lg font-bold text-amber-400">SIH26146</Link>
-        <nav className="hidden md:flex items-center gap-1">
-          {[
-            ["Dashboard","/overview"],
-            ["Ingest","/ingest"],
-            ["Graph","/graph"],
-            ["Alerts","/alerts"],
-            ["Timeline","/timeline"],
-            ["GeoMap","/geomap"],
-            ["Reports","/reports"],
-          ].map(([l,t]) => (
-            <Link key={t} to={t}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
-                ${t === "/graph" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}>
-              {l}
-            </Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <Badge variant="blue" className="text-[10px]">
-            {graphStats.nodes} nodes · {graphStats.edges} edges
-          </Badge>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-        </div>
-      </header>
+      {/* ── UNIFIED APP HEADER ── */}
+      <AppHeader
+        rightContent={
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+              {graphStats.nodes} nodes · {graphStats.edges} edges
+            </span>
+          </div>
+        }
+      />
 
       {/* ── BODY ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -617,13 +598,18 @@ export default function GraphPage() {
         {/* ════════════════════════════════════════════════
             LEFT PANEL
         ════════════════════════════════════════════════ */}
-        <aside className="w-[280px] shrink-0 border-r border-zinc-800 bg-zinc-900/80 flex flex-col overflow-y-auto">
+        <aside className="w-[280px] shrink-0 border-r border-white/10 bg-slate-950/85 backdrop-blur-xl flex flex-col overflow-y-auto">
           <div className="p-4 space-y-5">
 
             {/* Title */}
-            <div className="flex items-center gap-2">
-              <Network className="h-4 w-4 text-blue-400" />
-              <span className="font-semibold text-sm text-zinc-100">Graph Explorer</span>
+            <div className="flex items-center justify-between pb-2 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                  <Network className="h-3.5 w-3.5 text-blue-400" />
+                </div>
+                <span className="font-display text-base font-normal text-white tracking-tight">Graph Explorer</span>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500">2D/CYTO</span>
             </div>
 
             {/* Search */}
@@ -633,7 +619,7 @@ export default function GraphPage() {
                 placeholder="Search wallet / TXID / IP..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-8 h-8 text-xs"
+                className="pl-8 h-8 text-xs bg-slate-900/80 border-white/10 rounded-full text-white"
               />
             </div>
 
@@ -737,10 +723,10 @@ export default function GraphPage() {
                 <span>Communities</span><span className="text-zinc-300 font-mono">{graphStats.communities}</span>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={exportPNG}>
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 rounded-full border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10" onClick={exportPNG}>
               <Download className="h-3.5 w-3.5" />Export as PNG
             </Button>
-            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5"
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 rounded-full border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10"
               onClick={() => { setViewMode(v => v === "force" ? "cytoscape" : "force"); setSelectedNode(null); setHighlightIds(new Set()) }}>
               <RefreshCw className="h-3.5 w-3.5" />
               {viewMode === "force" ? "Switch to Cytoscape" : "Switch to Force Graph"}
@@ -828,9 +814,9 @@ export default function GraphPage() {
             RIGHT DETAIL DRAWER (inline slide-in)
         ════════════════════════════════════════════════ */}
         {selectedNode && (
-          <div className="w-96 shrink-0 border-l border-zinc-800 bg-zinc-900 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
+          <div className="w-96 shrink-0 border-l border-white/10 bg-slate-950/90 backdrop-blur-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200 shadow-2xl">
             {/* Drawer header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 shrink-0">
               <div className="w-3 h-3 rounded-full shrink-0"
                 style={{ backgroundColor: selectedNode.risk > 0.8 ? "#ef4444" : NODE_COLORS[selectedNode.type] || "#aaa" }} />
               <span className="font-mono text-xs text-zinc-300 flex-1 truncate">{selectedNode.label}</span>

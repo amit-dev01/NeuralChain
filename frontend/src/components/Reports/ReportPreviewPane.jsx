@@ -34,22 +34,22 @@ export default function ReportPreviewPane({
   const sections = reportData.sections || {}
 
   return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-700/80 shadow-2xl p-6 space-y-4 animate-in fade-in-50 duration-300">
+    <div className="editorial-surface rounded-2xl border border-white/10 shadow-2xl p-6 space-y-4 animate-in fade-in-50 duration-300">
       {/* ── TOP ACTION BAR ── */}
-      <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+      <div className="flex items-center justify-between pb-3 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-blue-400" />
-          <h2 className="text-base font-bold text-zinc-100">Report Preview</h2>
-          <Badge variant="blue" className="text-[11px] h-5 ml-1">
-            Simulated A4 PDF Print Layout
-          </Badge>
+          <FileText className="h-5 w-5 text-amber-400" />
+          <h2 className="text-xl font-display font-medium text-white">Investigation Dossier Preview</h2>
+          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 ml-2 hidden sm:inline-block">
+            Simulated A4 PDF Print Brief
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
             size="sm"
             onClick={() => onDownload(reportData)}
-            className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
+            className="h-8 text-xs gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-semibold rounded-full shadow-md shadow-amber-500/20"
           >
             <Download className="h-3.5 w-3.5" />
             Download {reportData.outputFormat || "PDF"}
@@ -59,7 +59,7 @@ export default function ReportPreviewPane({
             size="sm"
             variant="ghost"
             onClick={onClose}
-            className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full"
+            className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full"
             title="Close Preview"
           >
             <X className="h-4 w-4" />
@@ -68,7 +68,7 @@ export default function ReportPreviewPane({
       </div>
 
       {/* ── A4 PAPER CONTAINER (bg-white text-zinc-900 centered) ── */}
-      <div className="max-h-[750px] overflow-y-auto p-4 bg-zinc-950/80 rounded-xl border border-zinc-800/80 flex justify-center scrollbar-thin scrollbar-thumb-zinc-700">
+      <div className="max-h-[750px] overflow-y-auto p-4 bg-slate-950/80 rounded-xl border border-white/10 flex justify-center scrollbar-thin scrollbar-thumb-zinc-700">
         <div className="w-full max-w-4xl bg-white text-zinc-900 p-8 sm:p-12 rounded-lg shadow-2xl space-y-8 font-sans border border-zinc-200">
           {/* ── A) HEADER ── */}
           {reportData.includeBranding !== false && (

@@ -65,7 +65,7 @@ export default function TimelineControls() {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 shadow-lg space-y-3.5">
+    <div className="editorial-surface rounded-2xl p-4 border border-white/10 shadow-xl space-y-3.5">
       {/* ── ROW 1: TIME RANGE CONTROLS ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Date range pickers */}
@@ -78,7 +78,7 @@ export default function TimelineControls() {
             type="datetime-local"
             value={localFrom}
             onChange={(e) => setLocalFrom(e.target.value)}
-            className="h-8 w-48 text-xs bg-zinc-950 border-zinc-700 text-zinc-200 focus:border-blue-500"
+            className="h-8 w-48 text-xs bg-slate-900/80 border-white/10 rounded-full text-white"
           />
           <span className="text-zinc-500 font-medium">→</span>
           <span className="text-zinc-400 font-medium">To</span>
@@ -86,12 +86,12 @@ export default function TimelineControls() {
             type="datetime-local"
             value={localTo}
             onChange={(e) => setLocalTo(e.target.value)}
-            className="h-8 w-48 text-xs bg-zinc-950 border-zinc-700 text-zinc-200 focus:border-blue-500"
+            className="h-8 w-48 text-xs bg-slate-900/80 border-white/10 rounded-full text-white"
           />
         </div>
 
         {/* Segmented Preset Buttons */}
-        <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+        <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-full border border-white/10">
           {[
             { id: "1h", label: "Last 1 Hour" },
             { id: "24h", label: "Last 24 Hours" },
@@ -105,10 +105,10 @@ export default function TimelineControls() {
                 size="sm"
                 variant={isActive ? "default" : "ghost"}
                 onClick={() => applyPreset(id)}
-                className={`h-7 px-3 text-xs font-medium transition-all ${
+                className={`h-7 px-3 text-xs font-medium rounded-full transition-all ${
                   isActive
                     ? "bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 }`}
               >
                 {label}
@@ -124,10 +124,10 @@ export default function TimelineControls() {
             <span className="hidden sm:inline">Granularity:</span>
           </div>
           <Select value={granularity} onValueChange={setGranularity}>
-            <SelectTrigger className="h-8 w-28 text-xs bg-zinc-950 border-zinc-700 text-zinc-200">
+            <SelectTrigger className="h-8 w-28 text-xs bg-slate-900/80 border-white/10 rounded-full text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-900 border-white/10">
               <SelectItem value="1m">1 min</SelectItem>
               <SelectItem value="5m">5 min</SelectItem>
               <SelectItem value="15m">15 min</SelectItem>
@@ -140,7 +140,7 @@ export default function TimelineControls() {
             type="button"
             size="sm"
             onClick={handleApply}
-            className="h-8 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
+            className="h-8 px-4 text-xs font-medium rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20"
           >
             Apply
           </Button>

@@ -3,30 +3,13 @@ import { Link } from "react-router-dom"
 import {
   Globe,
   ChevronRight,
-  LayoutDashboard,
-  Upload,
-  GitFork,
-  Bell,
-  Clock,
-  Map,
-  FileText,
-  Activity,
 } from "lucide-react"
 
+import AppHeader from "@/components/common/AppHeader"
 import GeoMapControls from "@/components/GeoMap/GeoMapControls"
 import GeoMapCanvas from "@/components/GeoMap/GeoMapCanvas"
 import CountryDetailSheet from "@/components/GeoMap/CountryDetailSheet"
 import { getCountryDetail } from "@/data/geoMockData"
-
-const NAV_LINKS = [
-  { label: "Dashboard", to: "/overview", icon: LayoutDashboard },
-  { label: "Ingest",    to: "/ingest",   icon: Upload          },
-  { label: "Graph",     to: "/graph",    icon: GitFork         },
-  { label: "Alerts",    to: "/alerts",   icon: Bell            },
-  { label: "Timeline",  to: "/timeline", icon: Clock           },
-  { label: "GeoMap",    to: "/geomap",   icon: Map             },
-  { label: "Reports",   to: "/reports",  icon: FileText        },
-]
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GEOGRAPHIC INTELLIGENCE PAGE
@@ -62,79 +45,41 @@ export default function GeoMapPage() {
   }
 
   return (
-    <div className="h-screen w-screen bg-zinc-950 text-zinc-100 flex flex-col overflow-hidden">
-      {/* ── STICKY TOPBAR HEADER ── */}
-      <header className="h-14 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md z-50 shrink-0">
-        <div className="mx-auto max-w-full px-6 h-full flex items-center gap-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="font-mono text-lg font-bold text-amber-400 tracking-tight">
-              SIH26146
-            </span>
-            <span className="hidden sm:block text-xs text-zinc-500 border border-zinc-700 rounded px-1.5 py-0.5">
-              NeuralChain
-            </span>
-          </Link>
-
-          {/* Nav links */}
-          <nav className="hidden md:flex items-center gap-1 flex-1" aria-label="Main navigation">
-            {NAV_LINKS.map(({ label, to, icon: Icon }) => {
-              const isActive = to === "/geomap"
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-zinc-800 text-zinc-100"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* System Status badge */}
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-xs text-zinc-400 hidden sm:block">
-              All Systems Operational
-            </span>
-          </div>
-        </div>
-      </header>
+    <div className="h-screen w-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden editorial-glow selection:bg-amber-500/20">
+      {/* ── UNIFIED APP HEADER ── */}
+      <AppHeader
+        rightContent={
+          <span className="text-[11px] font-mono text-zinc-400 bg-slate-900/80 px-3 py-1 rounded-full border border-white/10 hidden sm:inline">
+            Basemap: CartoDB Dark Matter
+          </span>
+        }
+      />
 
       {/* ── SUBHEADER / BREADCRUMB ROW ── */}
-      <div className="h-14 border-b border-zinc-800 bg-zinc-900/60 px-6 flex items-center justify-between shrink-0">
+      <div className="h-14 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl px-6 flex items-center justify-between shrink-0">
         <div>
-          <nav className="flex items-center gap-1.5 text-xs text-zinc-500">
-            <Link to="/overview" className="hover:text-zinc-300 transition-colors">
+          <nav className="flex items-center gap-1.5 text-xs text-zinc-400">
+            <Link to="/overview" className="hover:text-white transition-colors">
               Dashboard
             </Link>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-300 font-medium">GeoMap</span>
+            <ChevronRight className="h-3 w-3 text-zinc-600" />
+            <span className="text-zinc-200 font-medium">GeoMap</span>
           </nav>
           <div className="flex items-center gap-2 mt-0.5">
-            <h1 className="text-sm font-bold flex items-center gap-1.5 text-zinc-100">
+            <h1 className="font-display text-lg font-normal flex items-center gap-2 text-white tracking-tight">
               <Globe className="h-4 w-4 text-blue-400" />
-              Geographic Intelligence
+              Geographic <span className="font-serif italic text-zinc-400 font-light">Intelligence</span>
             </h1>
-            <span className="text-zinc-600 hidden sm:inline">•</span>
-            <p className="text-xs text-zinc-400 hidden sm:inline">
+            <span className="text-zinc-700 hidden sm:inline">•</span>
+            <p className="text-xs text-zinc-400 hidden sm:inline font-light">
               IP origin mapping, ASN distribution, and cross-border transaction flow analysis.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800">
-            Basemap: CartoDB Dark Matter
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+            OFFLINE READY
           </span>
         </div>
       </div>
