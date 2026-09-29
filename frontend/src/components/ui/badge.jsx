@@ -8,6 +8,7 @@ function Badge({ className, variant = "default", ...props }) {
     green: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     blue: "bg-blue-500/15 text-blue-400 border-blue-500/30",
     violet: "bg-violet-500/15 text-violet-400 border-violet-500/30",
+    orange: "bg-orange-500/15 text-orange-400 border-orange-500/30",
   }
   return (
     <span
