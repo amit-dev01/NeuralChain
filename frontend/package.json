@@ -9,23 +9,33 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.1",
-    "react-force-graph-2d": "^1.25.5",
-    "cytoscape": "^3.29.2",
-    "recharts": "^2.12.7",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/react-toast": "^1.2.23",
     "@tanstack/react-query": "^5.40.0",
     "axios": "^1.7.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cytoscape": "^3.29.2",
     "date-fns": "^3.6.0",
-    "lucide-react": "^0.395.0"
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.395.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-force-graph-2d": "^1.25.5",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.23.1",
+    "recharts": "^2.15.4",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.3",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
     "vite": "^5.3.1"
   }
 }

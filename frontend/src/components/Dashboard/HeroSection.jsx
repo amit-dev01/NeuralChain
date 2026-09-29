@@ -41,11 +41,11 @@ export default function HeroSection() {
           {/* Actions */}
           <div className="hero__actions anim-fade-rise anim-delay-2">
             <Link
-              to="/ingest"
+              to="/overview"
               className="btn-pill btn-pill--lg"
               id="hero-cta-primary"
             >
-              Start Analysis
+              Open Dashboard
             </Link>
             <Link
               to="/graph"
