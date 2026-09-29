@@ -4,6 +4,7 @@ import OverviewPage from './pages/OverviewPage.jsx'
 import GraphPage from './pages/GraphPage.jsx'
 import AlertsPage from './pages/AlertsPage.jsx'
 import IngestPage from './pages/IngestPage.jsx'
+import TimelinePage from './pages/TimelinePage.jsx'
 
 export default function App() {
   return (
@@ -16,9 +17,9 @@ export default function App() {
       <Route path="/graph"     element={<GraphPage />} />
       <Route path="/alerts"    element={<AlertsPage />} />
       <Route path="/ingest"    element={<IngestPage />} />
+      <Route path="/timeline"  element={<TimelinePage />} />
 
       {/* Stub routes */}
-      <Route path="/timeline"  element={<PlaceholderPage title="Timeline" />} />
       <Route path="/geomap"    element={<PlaceholderPage title="GeoMap" />} />
       <Route path="/reports"   element={<PlaceholderPage title="Reports" />} />
     </Routes>
