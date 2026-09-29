@@ -600,7 +600,15 @@ export default function AlertsPage() {
         <div className="mx-auto max-w-screen-2xl px-6 h-14 flex items-center gap-6">
           <Link to="/" className="font-mono text-lg font-bold text-amber-400">SIH26146</Link>
           <nav className="hidden md:flex items-center gap-1">
-            {[["Dashboard","/overview"],["Ingest","/ingest"],["Graph","/graph"],["Alerts","/alerts"]].map(([l,t]) => (
+            {[
+              ["Dashboard","/overview"],
+              ["Ingest","/ingest"],
+              ["Graph","/graph"],
+              ["Alerts","/alerts"],
+              ["Timeline","/timeline"],
+              ["GeoMap","/geomap"],
+              ["Reports","/reports"],
+            ].map(([l,t]) => (
               <Link key={t} to={t} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                 ${t === "/alerts" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}>{l}</Link>
             ))}

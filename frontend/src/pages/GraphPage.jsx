@@ -584,7 +584,15 @@ export default function GraphPage() {
       <header className="shrink-0 h-14 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md flex items-center px-6 gap-6 z-50">
         <Link to="/" className="font-mono text-lg font-bold text-amber-400">SIH26146</Link>
         <nav className="hidden md:flex items-center gap-1">
-          {[["Dashboard","/overview"],["Ingest","/ingest"],["Graph","/graph"],["Alerts","/alerts"]].map(([l,t]) => (
+          {[
+            ["Dashboard","/overview"],
+            ["Ingest","/ingest"],
+            ["Graph","/graph"],
+            ["Alerts","/alerts"],
+            ["Timeline","/timeline"],
+            ["GeoMap","/geomap"],
+            ["Reports","/reports"],
+          ].map(([l,t]) => (
             <Link key={t} to={t}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                 ${t === "/graph" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}>

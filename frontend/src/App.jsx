@@ -22,14 +22,9 @@ export default function App() {
       <Route path="/timeline"  element={<TimelinePage />} />
       <Route path="/geomap"    element={<GeoMapPage />} />
       <Route path="/reports"   element={<ReportsPage />} />
-    </Routes>
-  )
-}
 
-function PlaceholderPage({ title }) {
-  return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <p className="text-zinc-400 text-lg">{title} — coming soon</p>
-    </div>
+      {/* Fallback route */}
+      <Route path="*"          element={<OverviewPage />} />
+    </Routes>
   )
 }
