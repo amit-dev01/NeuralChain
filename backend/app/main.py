@@ -13,7 +13,10 @@ from app.alerts.router import router as alerts_router
 from app.api.geo_router import router as geo_router
 from app.api.stats_router import router as stats_router
 from app.api.timeline_router import router as timeline_router
-from app.core.celery_app import celery_app
+try:
+    from app.core.celery_app import celery_app
+except Exception:
+    celery_app = None
 from app.core.config import settings
 from app.db.neo4j_client import neo4j_client
 from app.db.postgres import engine

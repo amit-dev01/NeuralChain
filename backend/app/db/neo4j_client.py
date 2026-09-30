@@ -1,24 +1,102 @@
-from neo4j import GraphDatabase
-from app.core.config import settings
+import logging
+import os
+from contextlib import contextmanager
+from typing import Any, Dict, Generator, List, Optional
+
+from dotenv import load_dotenv
+from neo4j import Driver, GraphDatabase, Session
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+try:
+    from app.core.config import settings
+
+    NEO4J_URI = os.getenv("NEO4J_URI") or getattr(
+        settings, "NEO4J_URI", "bolt://localhost:7687"
+    )
+    NEO4J_USER = os.getenv("NEO4J_USER") or getattr(
+        settings, "NEO4J_USER", "neo4j"
+    )
+    NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD") or getattr(
+        settings, "NEO4J_PASSWORD", "neuralchain_neo4j"
+    )
+except Exception:
+    NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "neuralchain_neo4j")
+
+# Module-level driver singleton
+_driver: Optional[Driver] = None
 
 
-class Neo4jClient:
-    def __init__(self):
-        self.driver = GraphDatabase.driver(
-            settings.NEO4J_URI,
-            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
+def get_driver() -> Driver:
+    """Get or create the singleton Neo4j driver instance."""
+    global _driver
+    if _driver is None:
+        _driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASSWORD),
         )
+    return _driver
+
+
+def close_driver() -> None:
+    """Close the active Neo4j driver and reset the singleton reference."""
+    global _driver
+    if _driver is not None:
+        try:
+            _driver.close()
+        except Exception as e:
+            logger.error("Error closing Neo4j driver: %s", e)
+        finally:
+            _driver = None
+
+
+@contextmanager
+def get_neo4j_session(database: str = "neo4j") -> Generator[Session, None, None]:
+    """Context manager yielding a Neo4j session with auto-closure."""
+    driver = get_driver()
+    session = driver.session(database=database)
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def ping() -> bool:
+    """Verify connectivity by running RETURN 1 (never raises)."""
+    try:
+        with get_neo4j_session() as session:
+            result = session.run("RETURN 1 AS num")
+            record = result.single()
+            return bool(record and record["num"] == 1)
+    except Exception as e:
+        logger.debug("Neo4j ping check failed: %s", e)
+        return False
+
+
+def run_query(cypher: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """Convenience wrapper to run a Cypher query and return a list of record dicts."""
+    if params is None:
+        params = {}
+    with get_neo4j_session() as session:
+        result = session.run(cypher, params)
+        return [record.data() for record in result]
+
+
+# Compatibility proxy for app.main
+class Neo4jClientProxy:
+    @property
+    def driver(self) -> Driver:
+        return get_driver()
 
     def ping(self) -> bool:
-        self.driver.verify_connectivity()
-        return True
+        return ping()
 
-    def close(self):
-        self.driver.close()
-
-
-neo4j_client = Neo4jClient()
+    def close(self) -> None:
+        close_driver()
 
 
-def get_neo4j_session():
-    return neo4j_client.driver.session()
+neo4j_client = Neo4jClientProxy()
