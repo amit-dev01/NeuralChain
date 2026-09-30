@@ -222,11 +222,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    detail_content = exc.detail
+    error_content = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail},
+        content={"detail": detail_content, "error": error_content},
         headers=exc.headers,
     )
+
 
 
 @app.exception_handler(Exception)
