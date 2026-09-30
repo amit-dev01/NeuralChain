@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-this-to-a-random-secret-key-in-production"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    # ML & Anomaly Detection Settings
+    MLFLOW_TRACKING_URI: str = "file:///app/data/mlruns"
+    MLFLOW_EXPERIMENT_NAME: str = "sih26146"
+    MODEL_STORE_PATH: str = "/app/data/models"
+    ISOLATION_FOREST_CONTAMINATION: float = 0.05
+    AUTOENCODER_LATENT_DIM: int = 16
+    AUTOENCODER_EPOCHS: int = 50
+    AUTOENCODER_LR: float = 1e-3
+    ANOMALY_WEIGHT_IF: float = 0.6
+    ANOMALY_WEIGHT_AE: float = 0.4
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
