@@ -230,3 +230,19 @@ class Entity(Base):
     first_seen = Column(DateTime, nullable=True)
     last_seen = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(String, nullable=False)
+    type = Column(String, nullable=False)  # full_investigation / alert_summary / entity_profile / transaction_export
+    format = Column(String, nullable=False)  # pdf / csv / json
+    status = Column(String, default="generating", nullable=False)  # generating / complete / failed
+    file_path = Column(String, nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    section_count = Column(Integer, default=0, nullable=False)
+    error_message = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
