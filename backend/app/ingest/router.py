@@ -45,7 +45,7 @@ async def upload_file(
     timestamp_format: TimestampFormat = Form(TimestampFormat.ISO_8601),
     deduplicate: bool = Form(True),
     geoip_enrich: bool = Form(True),
-    auto_run_ml: bool = Form(False),
+    auto_run_ml: bool = Form(True),
     db: Session = Depends(get_db),
 ):
     """Accept and validate a CSV, JSON, or XML file, initialize tracking, and queue ingestion."""

@@ -172,11 +172,11 @@ export default function IngestPage() {
     resolver: zodResolver(ingestSchema),
     defaultValues: {
       label: "",
-      sourceType: "",
-      timestampFormat: "",
+      sourceType: "raw_mempool",
+      timestampFormat: "iso_8601",
       deduplicate: true,
       geoip: true,
-      autoRunML: false,
+      autoRunML: true,
     },
   })
 

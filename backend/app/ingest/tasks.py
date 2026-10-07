@@ -187,10 +187,14 @@ def ingest_file_task(
             },
         )
 
-        # Optional: trigger ML pipeline chain
-        if config_dict.get("auto_run_ml", False):
+        # Trigger ML pipeline chain automatically
+        if config_dict.get("auto_run_ml", True):
             logger.info("Auto-running ML detection pipeline for dataset %s", dataset_id)
-            run_all_models_task.delay(dataset_id)
+            try:
+                run_all_models_task.delay(dataset_id)
+            except Exception as d_err:
+                logger.info("Celery broker unavailable (%s), triggering pipeline in thread...", d_err)
+                run_all_models_task(dataset_id)
 
         return {
             "dataset_id": dataset_id,
@@ -241,4 +245,22 @@ def run_all_models_task(dataset_id: str) -> None:
             run_classification_task.s(dataset_id),
         ).apply_async()
     except Exception as e:
-        logger.warning("Could not dispatch ML model chain: %s", e)
+        logger.warning("Could not dispatch Celery chain (%s), executing models in background thread...", e)
+        import threading
+
+        def _direct_exec():
+            try:
+                from app.ml.anomaly.tasks import run_anomaly_detection_task
+                from app.ml.classifier.tasks import run_classification_task
+                from app.ml.clustering.tasks import run_clustering_task
+                from app.ml.sequence.tasks import run_mixing_detection_task
+
+                run_anomaly_detection_task(dataset_id)
+                run_clustering_task(dataset_id)
+                run_mixing_detection_task(dataset_id)
+                run_classification_task(dataset_id)
+                logger.info("Direct multi-model execution completed successfully for dataset %s", dataset_id)
+            except Exception as direct_err:
+                logger.error("Direct model execution failed: %s", direct_err)
+
+        threading.Thread(target=_direct_exec, daemon=True).start()
