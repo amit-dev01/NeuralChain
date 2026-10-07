@@ -7,6 +7,7 @@ import IngestPage from './pages/IngestPage.jsx'
 import TimelinePage from './pages/TimelinePage.jsx'
 import GeoMapPage from './pages/GeoMapPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
+import DocsPage from './pages/DocsPage.jsx'
 
 export default function App() {
   return (
@@ -15,16 +16,19 @@ export default function App() {
       <Route path="/" element={<Dashboard />} />
 
       {/* App pages */}
-      <Route path="/overview"  element={<OverviewPage />} />
-      <Route path="/graph"     element={<GraphPage />} />
-      <Route path="/alerts"    element={<AlertsPage />} />
-      <Route path="/ingest"    element={<IngestPage />} />
-      <Route path="/timeline"  element={<TimelinePage />} />
-      <Route path="/geomap"    element={<GeoMapPage />} />
-      <Route path="/reports"   element={<ReportsPage />} />
+      <Route path="/overview"      element={<OverviewPage />} />
+      <Route path="/dashboard"     element={<OverviewPage />} />
+      <Route path="/graph"         element={<GraphPage />} />
+      <Route path="/intelligence"  element={<GraphPage />} />
+      <Route path="/alerts"        element={<AlertsPage />} />
+      <Route path="/ingest"        element={<IngestPage />} />
+      <Route path="/timeline"      element={<TimelinePage />} />
+      <Route path="/geomap"        element={<GeoMapPage />} />
+      <Route path="/reports"       element={<ReportsPage />} />
+      <Route path="/docs"          element={<DocsPage />} />
 
       {/* Fallback route */}
-      <Route path="*"          element={<OverviewPage />} />
+      <Route path="*"              element={<OverviewPage />} />
     </Routes>
   )
 }

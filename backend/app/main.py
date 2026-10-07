@@ -10,6 +10,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.alerts.router import router as alerts_router
+from app.api.ai_router import router as ai_router
 from app.api.geo_router import router as geo_router
 from app.api.stats_router import router as stats_router
 from app.api.timeline_router import router as timeline_router
@@ -65,6 +66,7 @@ app.include_router(reports_router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(stats_router, prefix="/api/v1/stats", tags=["stats"])
 app.include_router(timeline_router, prefix="/api/v1/timeline", tags=["timeline"])
 app.include_router(geo_router, prefix="/api/v1/geo", tags=["geo"])
+app.include_router(ai_router, prefix="/api/v1/ai", tags=["ai"])
 
 
 # --- Health check helper functions ---
@@ -178,6 +180,7 @@ async def shutdown_event():
 
 # 6. Health check endpoint
 @app.get("/health", tags=["health"])
+@app.get("/api/v1/health", tags=["health"])
 async def health():
     pg = check_postgres()
     r = check_redis()

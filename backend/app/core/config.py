@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     ANOMALY_WEIGHT_IF: float = 0.6
     ANOMALY_WEIGHT_AE: float = 0.4
 
+    # AI / LLM Forensics (Gemma 4 & Gemini)
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemma-4-26b-a4b-it"
+    GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TEMPERATURE: float = 0.2
+    GEMINI_MAX_OUTPUT_TOKENS: int = 4096
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

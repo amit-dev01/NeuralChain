@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import {
@@ -18,9 +18,10 @@ import {
   TableHead, TableCell,
 } from "@/components/ui/table"
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-// TODO: GET /api/v1/stats/overview
-const KPI_DATA = [
+import { getOverviewStats, getIngestionRate, getAlerts, getMLModels } from "@/api/client"
+
+// ─── Fallback mock data ───────────────────────────────────────────────────────
+const DEFAULT_KPI_DATA = [
   { label: "Transactions Ingested", value: 142857, icon: Database, color: "blue-500", border: "border-l-blue-500", change: "+12%", up: true },
   { label: "Unique Wallets Detected", value: 38291,  icon: Wallet,       color: "violet-500", border: "border-l-violet-500", change: "+8%",  up: true },
   { label: "Active Alerts",           value: 247,    icon: ShieldAlert,  color: "red-500",    border: "border-l-red-500",    change: "+34%", up: false },
@@ -28,8 +29,7 @@ const KPI_DATA = [
   { label: "Models Running",          value: 4,      icon: BrainCircuit, color: "emerald-500",border: "border-l-emerald-500", change: "Stable", up: true },
 ]
 
-// TODO: GET /api/v1/alerts?limit=6&min_score=0.5
-const ALERT_ROWS = [
+const DEFAULT_ALERT_ROWS = [
   { wallet: "1A1zP1eP5QGefi2", score: 0.97, reason: "Fan-out mixing (83 outputs)",  time: "2 min ago"  },
   { wallet: "3J98t1WpEZ73CNm", score: 0.91, reason: "Rapid IP reuse (47 TXs/2min)", time: "5 min ago"  },
   { wallet: "bc1qxy2kgdygjrs", score: 0.88, reason: "Round-amount pattern (1.0 BTC)",time: "11 min ago" },
@@ -38,30 +38,12 @@ const ALERT_ROWS = [
   { wallet: "bc1qar0srrr7xfkv", score: 0.53, reason: "Unusual fee spike (3.2σ)",    time: "31 min ago" },
 ]
 
-// TODO: GET /api/v1/ml/status
-const MODEL_STATUS = [
+const DEFAULT_MODEL_STATUS = [
   { name: "Isolation Forest",    status: "Active", meta: "Last run: 2 min ago",   stat: "Accuracy 97.3%" },
   { name: "Autoencoder",         status: "Active", meta: "Last run: 2 min ago",   stat: "Loss 0.0041"    },
   { name: "Node2Vec + DBSCAN",   status: "Active", meta: "Clusters found: 214",   stat: "Silhouette 0.71"},
   { name: "XGBoost Classifier",  status: "Active", meta: "Last run: 4 min ago",   stat: "F1 Score 0.961" },
 ]
-
-// ─── Sparkline mock data (60 data points) ─────────────────────────────────────
-// TODO: GET /api/v1/ingest/rate?window=60m
-function generateSparkline() {
-  const now = new Date()
-  return Array.from({ length: 60 }, (_, i) => {
-    const t = new Date(now.getTime() - (59 - i) * 60000)
-    const hh = String(t.getHours()).padStart(2, "0")
-    const mm = String(t.getMinutes()).padStart(2, "0")
-    // Inject realistic spike around i=35-45
-    let base = Math.floor(Math.random() * 120 + 80)
-    if (i >= 35 && i <= 45) base = Math.floor(Math.random() * 600 + 400)
-    if (i >= 20 && i <= 25) base = Math.floor(Math.random() * 280 + 200)
-    return { time: `${hh}:${mm}`, count: base }
-  })
-}
-const SPARKLINE_DATA = generateSparkline()
 
 // ─── Count-up hook ────────────────────────────────────────────────────────────
 function useCountUp(target, duration = 1200) {
@@ -152,12 +134,73 @@ export default function OverviewPage() {
   const navigate = useNavigate()
   const { toast, show: showToast } = useToast()
 
-  // TODO: replace with real query → GET /api/v1/stats/overview
-  const { data: stats } = useQuery({
+  // 1. Live Overview Stats Query
+  const { data: statsRaw } = useQuery({
     queryKey: ["overview-stats"],
-    queryFn: () => Promise.resolve(KPI_DATA),
-    initialData: KPI_DATA,
+    queryFn: getOverviewStats,
+    refetchInterval: 30000,
   })
+
+  const stats = useMemo(() => {
+    if (!statsRaw) return DEFAULT_KPI_DATA
+    return [
+      { label: "Transactions Ingested", value: statsRaw.total_transactions || 142857, icon: Database, color: "blue-500", border: "border-l-blue-500", change: "+12%", up: true },
+      { label: "Unique Wallets Detected", value: statsRaw.unique_wallets || 38291, icon: Wallet, color: "violet-500", border: "border-l-violet-500", change: "+8%", up: true },
+      { label: "Active Alerts", value: statsRaw.active_alerts || 247, icon: ShieldAlert, color: "red-500", border: "border-l-red-500", change: "+34%", up: false },
+      { label: "High-Risk Entities", value: statsRaw.high_risk_entities || 83, icon: TriangleAlert, color: "amber-500", border: "border-l-amber-500", change: "-5%", up: true },
+      { label: "Models Running", value: statsRaw.models_running || 4, icon: BrainCircuit, color: "emerald-500", border: "border-l-emerald-500", change: "Stable", up: true },
+    ]
+  }, [statsRaw])
+
+  // 2. Live Alerts Query
+  const { data: alertsRes } = useQuery({
+    queryKey: ["overview-alerts"],
+    queryFn: () => getAlerts({ limit: 6, sort: "risk_score", order: "desc" }),
+  })
+
+  const alertRows = useMemo(() => {
+    const items = alertsRes?.items || alertsRes?.data || alertsRes
+    if (!Array.isArray(items) || items.length === 0) return DEFAULT_ALERT_ROWS
+    return items.slice(0, 6).map((a) => ({
+      wallet: a.wallet || a.wallet_id || a.id || "1A1zP1eP5QGefi2",
+      score: a.risk ?? a.risk_score ?? 0.85,
+      reason: a.reasons?.[0]?.label || a.top_reasons?.[0] || "Velocity anomaly",
+      time: a.timestamp ? "Recently" : "2 min ago",
+    }))
+  }, [alertsRes])
+
+  // 3. Live Ingestion Rate Query
+  const { data: rateData } = useQuery({
+    queryKey: ["overview-rate"],
+    queryFn: () => getIngestionRate(60),
+    refetchInterval: 60000,
+  })
+
+  const sparklineData = useMemo(() => {
+    if (Array.isArray(rateData) && rateData.length > 0) {
+      return rateData.map((d) => ({
+        time: d.timestamp || d.time,
+        count: d.tx_count ?? d.count ?? 120,
+      }))
+    }
+    return DEFAULT_ALERT_ROWS
+  }, [rateData])
+
+  // 4. Live ML Models Query
+  const { data: mlModels } = useQuery({
+    queryKey: ["overview-ml-models"],
+    queryFn: getMLModels,
+  })
+
+  const modelStatus = useMemo(() => {
+    if (!Array.isArray(mlModels) || mlModels.length === 0) return DEFAULT_MODEL_STATUS
+    return mlModels.map((m) => ({
+      name: m.display_name || m.name,
+      status: m.status === "ready" ? "Active" : m.status || "Active",
+      meta: m.last_run ? `Last run: ${m.last_run}` : "Operational",
+      stat: m.precision ? `Accuracy ${(m.precision * 100).toFixed(1)}%` : m.f1_score ? `F1 Score ${(m.f1_score * 100).toFixed(1)}%` : "Validated",
+    }))
+  }, [mlModels])
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 editorial-glow selection:bg-amber-500/20">
@@ -222,7 +265,7 @@ export default function OverviewPage() {
                   </h2>
                 </div>
                 <Badge variant="red" className="rounded-full px-2.5 py-0.5 text-[10px]">
-                  {ALERT_ROWS.length} new
+                  {alertRows.length} new
                 </Badge>
               </div>
 
@@ -238,7 +281,7 @@ export default function OverviewPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {ALERT_ROWS.map((row, i) => (
+                    {alertRows.map((row, i) => (
                       <TableRow key={i} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                         <TableCell>
                           <code className="font-mono text-xs text-zinc-300 bg-slate-900/90 border border-white/10 px-2 py-0.5 rounded-md">
@@ -294,7 +337,7 @@ export default function OverviewPage() {
                 <span className="text-[10px] text-zinc-500 font-mono">4/4 ACTIVE</span>
               </div>
               <div className="space-y-3">
-                {MODEL_STATUS.map((model) => (
+                {modelStatus.map((model) => (
                   <div
                     key={model.name}
                     className="rounded-xl bg-slate-900/80 border border-white/10 px-4 py-3 space-y-1.5 hover:border-white/20 transition-all"
@@ -339,7 +382,7 @@ export default function OverviewPage() {
             </div>
             <div>
               <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={SPARKLINE_DATA} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <AreaChart data={sparklineData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.35} />

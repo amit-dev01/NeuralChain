@@ -180,16 +180,24 @@ def _build_executive_summary(
         config.to_date.strftime("%Y-%m-%d") if config.to_date else "present"
     )
 
-    summary_text = (
-        f"Analysis of {total_tx:,} transactions from {from_str} to {to_str} "
-        f"identified {active_alerts:,} high-risk alerts across "
-        f"{high_risk_entities:,} unique entities. Automated forensic models "
-        f"(Isolation Forest, Deep Autoencoder, Graph Clustering, and Gradient Boosted Trees) "
-        f"classified transaction vectors at a minimum risk threshold of {config.risk_threshold:.2f}. "
-        f"Surveillance highlights anomalous velocity deviations, high fan-out distributions, "
-        f"and peeling sequence structures indicative of evasive capital movements."
-    )
-    flowables.append(Paragraph(summary_text, styles["BodyText"]))
+    ai_summary = data.get("ai_executive_summary")
+    if ai_summary:
+        for p in ai_summary.strip().split("\n\n"):
+            clean_p = p.strip().replace("\n", "<br/>")
+            if clean_p:
+                flowables.append(Paragraph(clean_p, styles["BodyText"]))
+                flowables.append(Spacer(1, 0.2 * cm))
+    else:
+        summary_text = (
+            f"Analysis of {total_tx:,} transactions from {from_str} to {to_str} "
+            f"identified {active_alerts:,} high-risk alerts across "
+            f"{high_risk_entities:,} unique entities. Automated forensic models "
+            f"(Isolation Forest, Deep Autoencoder, Graph Clustering, and Gradient Boosted Trees) "
+            f"classified transaction vectors at a minimum risk threshold of {config.risk_threshold:.2f}. "
+            f"Surveillance highlights anomalous velocity deviations, high fan-out distributions, "
+            f"and peeling sequence structures indicative of evasive capital movements."
+        )
+        flowables.append(Paragraph(summary_text, styles["BodyText"]))
     return flowables
 
 
@@ -560,6 +568,7 @@ def generate_json_report(config: ReportConfig, data: Dict[str, Any]) -> Dict[str
         "alerts": data.get("alerts", []),
         "model_metrics": data.get("model_metrics", {}),
         "geo_distribution": data.get("top_countries", []),
+        "ai_executive_summary": data.get("ai_executive_summary"),
     }
 
 
@@ -651,9 +660,34 @@ def _collect_report_data(config: ReportConfig, db: Session) -> Dict[str, Any]:
         for r in geo_rows
     ]
 
+    # 5. Optional AI Forensic Executive Summary via Gemma 4 / Gemini
+    ai_executive_summary = None
+    if ReportSection.EXECUTIVE_SUMMARY in config.sections:
+        try:
+            from app.core.gemini_client import generate_content_with_fallback
+            prompt = (
+                f"Prepare an authoritative forensic executive summary for SIH 2026 / NTRO digital evidence docket.\n"
+                f"Metrics:\n"
+                f"- Total Transactions: {overview_stats.get('total_transactions', 0):,}\n"
+                f"- Active Anomaly Alerts: {overview_stats.get('active_alerts', 0)}\n"
+                f"- High-Risk Entities: {overview_stats.get('high_risk_entities', 0)}\n"
+                f"- Detection Confidence Threshold: {config.risk_threshold}\n"
+                f"- Evaluated Period: {config.from_date or 'inception'} to {config.to_date or 'present'}\n\n"
+                f"Provide concise, court-ready paragraphs evaluating laundering typologies, peeling patterns, and actionable recommendations."
+            )
+            res = generate_content_with_fallback(
+                prompt=prompt,
+                system_instruction="You are an expert blockchain forensics investigator and digital evidence specialist.",
+            )
+            if res.get("success") and res.get("text"):
+                ai_executive_summary = res["text"]
+        except Exception as ai_err:
+            logger.warning("AI Executive summary generation skipped/failed: %s", ai_err)
+
     return {
         "overview_stats": overview_stats,
         "alerts": alerts_data,
         "model_metrics": metrics_map,
         "top_countries": top_countries,
+        "ai_executive_summary": ai_executive_summary,
     }

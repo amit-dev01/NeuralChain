@@ -29,6 +29,7 @@ import {
   SelectItem, SelectValue,
 } from "@/components/ui/select"
 import { MOCK_GRAPH } from "@/data/graphMockData"
+import { getGraphNodes } from "@/api/client"
 
 cytoscape.use(coseBilkent)
 
@@ -309,10 +310,28 @@ export default function GraphPage() {
   const [highlightIds, setHighlightIds] = useState(new Set())
   const [toast, setToast]               = useState(null)
   const [physicsOff, setPhysicsOff]     = useState(false)
+  const [graphData, setGraphData]       = useState(MOCK_GRAPH)
 
   const showToast = useCallback((msg) => {
     setToast(msg); setTimeout(() => setToast(null), 3000)
   }, [])
+
+  // Live node query on search or refresh
+  useEffect(() => {
+    if (!search.trim() || search.length < 10) return
+    let active = true
+    const timeout = setTimeout(async () => {
+      try {
+        const live = await getGraphNodes(search.trim(), 2, riskRange[0])
+        if (active && live?.nodes?.length > 0) {
+          setGraphData(live)
+        }
+      } catch (err) {
+        console.warn("Neo4j query error:", err)
+      }
+    }, 500)
+    return () => { active = false; clearTimeout(timeout) }
+  }, [search, riskRange])
 
   // Turn off physics after 3s
   useEffect(() => {
@@ -322,28 +341,30 @@ export default function GraphPage() {
 
   // ── Filtered graph data ──
   const { nodes: filteredNodes, links: filteredLinks } = useMemo(() => {
-    const nodes = MOCK_GRAPH.nodes.filter(n => {
+    const nodes = (graphData?.nodes || MOCK_GRAPH.nodes).filter(n => {
       if (!nodeTypes[n.type]) return false
-      if (n.risk < riskRange[0] || n.risk > riskRange[1]) return false
+      const nodeRisk = typeof n.risk === 'number' ? n.risk : (typeof n.risk_score === 'number' ? n.risk_score : 0.2)
+      if (nodeRisk < riskRange[0] || nodeRisk > riskRange[1]) return false
       if (search.trim()) {
         const q = search.toLowerCase()
-        return n.label.toLowerCase().includes(q) || n.fullLabel?.toLowerCase().includes(q)
+        return n.label?.toLowerCase().includes(q) || n.fullLabel?.toLowerCase().includes(q)
       }
       return true
     })
     const nodeSet = new Set(nodes.map(n => n.id))
-    const links = MOCK_GRAPH.links.filter(l => {
+    const links = (graphData?.links || MOCK_GRAPH.links).filter(l => {
       const src = typeof l.source === "object" ? l.source.id : l.source
       const dst = typeof l.target === "object" ? l.target.id : l.target
       return nodeSet.has(src) && nodeSet.has(dst) && edgeTypes[l.type]
     })
     return { nodes, links }
-  }, [nodeTypes, edgeTypes, riskRange, search])
+  }, [graphData, nodeTypes, edgeTypes, riskRange, search])
 
   // ── Node canvas drawing ──
   const drawNode = useCallback((node, ctx, globalScale) => {
     const r          = 7
-    const isHigh     = node.risk > 0.8
+    const nodeRisk   = typeof node.risk === 'number' ? node.risk : (typeof node.risk_score === 'number' ? node.risk_score : 0.2)
+    const isHigh     = nodeRisk > 0.8
     const isSelected = highlightIds.size > 0 && !highlightIds.has(node.id)
     const isSearch   = search.trim() && (node.label.toLowerCase().includes(search.toLowerCase()) || node.fullLabel?.toLowerCase().includes(search.toLowerCase()))
     const alpha      = isSelected ? 0.1 : 1

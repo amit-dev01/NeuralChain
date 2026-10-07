@@ -12,7 +12,7 @@ import {
   Network, Trash2, TrendingUp, GitBranch, Zap, Copy,
   ChevronDown, ChevronUp, ChevronsUpDown, ArrowUpDown,
   CheckCircle2, Activity, BarChart2, AlertTriangle,
-  ArrowRight, RefreshCw, ChevronRight,
+  ArrowRight, RefreshCw, ChevronRight, Sparkles,
 } from "lucide-react"
 
 import AppHeader from "@/components/common/AppHeader"
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import { MOCK_ALERTS, TREND_DATA } from "@/data/alertsMockData"
+import { getAlerts, updateAlertStatus, explainAlertWithAI } from "@/api/client"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 25
@@ -160,6 +161,20 @@ function ShapExpansion({ alert }) {
 function AlertDetailSheet({ alert, open, onClose, onStatusChange }) {
   if (!alert) return null
   const m = MODEL_BADGE[alert.model] || { variant: "default", short: "?" }
+  const [aiExplanation, setAiExplanation] = useState(null)
+  const [isExplaining, setIsExplaining] = useState(false)
+
+  const handleExplain = async () => {
+    setIsExplaining(true)
+    try {
+      const res = await explainAlertWithAI(alert)
+      setAiExplanation(res.summary || res.explanation || "No explanation returned.")
+    } catch (err) {
+      setAiExplanation("Unable to generate AI explanation: " + err.message)
+    } finally {
+      setIsExplaining(false)
+    }
+  }
 
   const rawJson = JSON.stringify({
     id: alert.id,
@@ -180,8 +195,8 @@ function AlertDetailSheet({ alert, open, onClose, onStatusChange }) {
         <SheetHeader>
           <div className="flex items-center gap-3 flex-wrap">
             <SheetTitle>Alert #{alert.id}</SheetTitle>
-            <Badge variant={riskVariant(alert.risk)} className="text-sm px-2.5 py-0.5 font-mono">
-              {alert.risk.toFixed(3)}
+            <Badge variant={riskVariant(alert.risk ?? 0.5)} className="text-sm px-2.5 py-0.5 font-mono">
+              {(alert.risk ?? 0.5).toFixed(3)}
             </Badge>
             <Badge variant={m.variant} className="text-xs">{alert.model}</Badge>
           </div>
@@ -275,6 +290,35 @@ function AlertDetailSheet({ alert, open, onClose, onStatusChange }) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Gemma 4 AI Forensic Interpretation */}
+              <div className="rounded-xl p-3.5 bg-amber-500/10 border border-amber-500/25 space-y-2 mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-amber-300 font-medium text-xs">
+                    <Sparkles className="h-4 w-4 text-amber-400" />
+                    <span>Gemma 4 Forensic Interpretation</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExplain}
+                    disabled={isExplaining}
+                    className="h-6 text-[10px] bg-amber-500/20 text-amber-200 border-amber-500/40 hover:bg-amber-500/30"
+                  >
+                    {isExplaining ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : null}
+                    {aiExplanation ? "Re-evaluate" : "Explain with Gemma 4"}
+                  </Button>
+                </div>
+                {aiExplanation ? (
+                  <p className="text-xs text-zinc-200 leading-relaxed font-sans bg-black/30 p-2.5 rounded-lg border border-white/5 whitespace-pre-wrap">
+                    {aiExplanation}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-zinc-400 italic">
+                    Click above to query Gemma 4 for an automated plain-language legal attribution explanation.
+                  </p>
+                )}
               </div>
             </TabsContent>
 
@@ -372,12 +416,12 @@ function AlertRow({ alert, idx, expanded, onExpand, onStatusChange, onOpenDrawer
         {/* Risk Score */}
         <td className="px-4 py-3">
           <div>
-            <span className={`text-sm font-bold font-mono ${riskColor(alert.risk)}`}>
-              {alert.risk.toFixed(3)}
+            <span className={`text-sm font-bold font-mono ${riskColor(alert.risk ?? 0.5)}`}>
+              {(alert.risk ?? 0.5).toFixed(3)}
             </span>
             <div className="h-1 w-16 bg-zinc-800 rounded-full mt-1 overflow-hidden">
-              <div className={`h-full rounded-full ${riskBg(alert.risk)}`}
-                style={{ width: `${alert.risk * 100}%` }} />
+              <div className={`h-full rounded-full ${riskBg(alert.risk ?? 0.5)}`}
+                style={{ width: `${(alert.risk ?? 0.5) * 100}%` }} />
             </div>
           </div>
         </td>
@@ -497,14 +541,32 @@ export default function AlertsPage() {
   const [toast,          setToast]          = useState(null)
   const [alerts,         setAlerts]         = useState(MOCK_ALERTS)
 
+  // ── Live Query ──
+  const { data: serverAlerts } = useQuery({
+    queryKey: ["alerts-list", filterRisk, filterModel, filterStatus],
+    queryFn: () => getAlerts({ limit: 100 }),
+  })
+
+  // Synchronize when server response arrives
+  useMemo(() => {
+    const items = serverAlerts?.items || serverAlerts?.data
+    if (Array.isArray(items) && items.length > 0) {
+      setAlerts(items)
+    }
+  }, [serverAlerts])
+
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  // ── Status mutation (optimistic) ──
-  const handleStatusChange = useCallback((id, newStatus) => {
+  // ── Status mutation (optimistic + server update) ──
+  const handleStatusChange = useCallback(async (id, newStatus) => {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a))
     if (drawerAlert?.id === id) setDrawerAlert(prev => ({ ...prev, status: newStatus }))
     showToast(`Alert #${id} → ${newStatus}`)
-    // TODO: PATCH /api/v1/alerts/{id}/status
+    try {
+      await updateAlertStatus(id, newStatus)
+    } catch (err) {
+      console.warn("Failed to persist alert status:", err)
+    }
   }, [drawerAlert])
 
   // ── Active filter chips ──

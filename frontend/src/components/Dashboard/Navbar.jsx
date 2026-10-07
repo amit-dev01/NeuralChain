@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom'
 
 const NAV_LINKS = [
-  { label: 'Intelligence', to: '/graph' },
+  { label: 'Dashboard', to: '/overview' },
+  { label: 'Graph', to: '/graph' },
   { label: 'Alerts', to: '/alerts' },
+  { label: 'Timeline', to: '/timeline' },
+  { label: 'GeoMap', to: '/geomap' },
   { label: 'Ingest', to: '/ingest' },
+  { label: 'Reports', to: '/reports' },
   { label: 'Docs', to: '/docs' },
 ]
 
