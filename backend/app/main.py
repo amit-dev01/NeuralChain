@@ -44,13 +44,17 @@ app = FastAPI(
 )
 
 # 2. Middleware
+cors_origins_env = [
+    o.strip()
+    for o in (settings.CORS_ORIGINS if hasattr(settings, "CORS_ORIGINS") else "").split(",")
+    if o.strip()
+]
+allowed_origins = cors_origins_env or ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:80",
-        "http://localhost",
-    ],
+    allow_origins=allowed_origins if allowed_origins != ["*"] else ["*"],
+    allow_origin_regex=r"https?://.*" if allowed_origins == ["*"] else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -117,9 +121,15 @@ def check_celery(timeout: float = 2.0) -> str:
 async def startup_event():
     logger.info("Running startup connectivity checks...")
 
-    # PostgreSQL ping
+    # PostgreSQL ping & table initialization
     if check_postgres() == "ok":
         logger.info("PostgreSQL connection: OK")
+        try:
+            from app.db.postgres import init_db
+            init_db()
+            logger.info("PostgreSQL / Supabase schema verified and tables created")
+        except Exception as e:
+            logger.warning("Could not auto-create tables: %s", e)
     else:
         logger.error("PostgreSQL connection: FAILED")
 

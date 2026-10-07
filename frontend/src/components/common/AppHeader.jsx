@@ -11,6 +11,7 @@ import {
   Activity,
   Sparkles,
   BookOpen,
+  BrainCircuit,
 } from "lucide-react"
 import AICopilotDrawer from "./AICopilotDrawer"
 
@@ -21,6 +22,7 @@ const NAV_LINKS = [
   { label: "Alerts",    to: "/alerts",   icon: Bell            },
   { label: "Timeline",  to: "/timeline", icon: Clock           },
   { label: "GeoMap",    to: "/geomap",   icon: Map             },
+  { label: "Models",    to: "/models",   icon: BrainCircuit    },
   { label: "Reports",   to: "/reports",  icon: FileText        },
   { label: "Docs",      to: "/docs",     icon: BookOpen        },
 ]

@@ -334,7 +334,12 @@ export default function OverviewPage() {
                     AI Model Status
                   </h2>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-mono">4/4 ACTIVE</span>
+                <Link
+                  to="/models"
+                  className="text-[11px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
+                >
+                  Manage Models <ExternalLink className="h-3 w-3" />
+                </Link>
               </div>
               <div className="space-y-3">
                 {modelStatus.map((model) => (

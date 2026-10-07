@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import ForceGraph2D from "react-force-graph-2d"
 import cytoscape from "cytoscape"
 import coseBilkent from "cytoscape-cose-bilkent"
@@ -296,7 +296,9 @@ export default function GraphPage() {
   const minimapRef  = useRef(null)
 
   const [viewMode, setViewMode]         = useState("force")   // "force" | "cytoscape"
-  const [search, setSearch]             = useState("")
+  const [searchParams]                  = useSearchParams()
+  const initialSearch                   = searchParams.get("focus") || searchParams.get("search") || ""
+  const [search, setSearch]             = useState(initialSearch)
   const [riskRange, setRiskRange]       = useState([0.0, 1.0])
   const [nodeTypes, setNodeTypes]       = useState({ wallet: true, transaction: true, ip: true, asn: true, country: true })
   const [edgeTypes, setEdgeTypes]       = useState({ SENT: true, RECEIVED: true, CONNECTED_FROM: true, BELONGS_TO: true })

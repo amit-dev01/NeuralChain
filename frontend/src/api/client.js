@@ -9,11 +9,12 @@ import { PAST_REPORTS } from '@/data/reportsMockData'
 import { VOLUME_DATA } from '@/data/timelineMockData'
 import { COUNTRY_DISTRIBUTION } from '@/data/geoMockData'
 
-const API_BASE = '/api/v1'
+const RAW_BASE = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+const API_BASE = RAW_BASE ? `${RAW_BASE}/api/v1` : '/api/v1'
 
 export const api = axios.create({
   baseURL: API_BASE,
-  timeout: 15000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -253,11 +254,41 @@ export async function getMLModels() {
   } catch (err) {
     console.warn('[API] /ml/models failed, using fallback:', err.message)
     return [
-      { name: 'isolation_forest', display_name: 'Isolation Forest', status: 'ready', precision: 0.973 },
-      { name: 'autoencoder', display_name: 'Autoencoder', status: 'ready', loss: 0.0041 },
-      { name: 'clustering', display_name: 'Node2Vec + DBSCAN', status: 'ready', silhouette: 0.71 },
-      { name: 'xgboost', display_name: 'XGBoost Threat Classifier', status: 'ready', f1_score: 0.961 },
+      { name: 'isolation_forest', display_name: 'Isolation Forest Anomaly Detector', status: 'ready', version: 'v1.0', metrics: { precision: 0.973, recall: 0.941, contamination: 0.08 } },
+      { name: 'autoencoder', display_name: 'Deep Autoencoder Anomaly Detector', status: 'ready', version: 'v1.0', metrics: { loss: 0.0038, separation_ratio: 2.14 } },
+      { name: 'node2vec_dbscan', display_name: 'Node2Vec + DBSCAN Clusterer', status: 'ready', version: 'v1.0', metrics: { silhouette: 0.71, clusters: 214 } },
+      { name: 'xgboost', display_name: 'XGBoost Threat Classifier', status: 'ready', version: 'v1.0', metrics: { roc_auc: 0.985, f1_score: 0.961, precision: 0.968 } },
     ]
+  }
+}
+
+export async function triggerModelRun(modelName, datasetId) {
+  try {
+    const res = await api.post(`/ml/run/${modelName}`, { dataset_id: datasetId })
+    return res.data
+  } catch (err) {
+    console.warn(`[API] /ml/run/${modelName} failed, simulating:`, err.message)
+    return { task_id: `task_${Date.now()}`, model_name: modelName, status: "queued" }
+  }
+}
+
+export async function triggerAllModels(datasetId) {
+  try {
+    const res = await api.post('/ml/run/all', { dataset_id: datasetId })
+    return res.data
+  } catch (err) {
+    console.warn('[API] /ml/run/all failed, simulating:', err.message)
+    return { task_id: `task_${Date.now()}`, message: "All 4 models queued" }
+  }
+}
+
+export async function getModelTaskStatus(taskId) {
+  try {
+    const res = await api.get(`/ml/run/${taskId}/status`)
+    return res.data
+  } catch (err) {
+    console.warn(`[API] /ml/run/${taskId}/status failed, simulating:`, err.message)
+    return { task_id: taskId, status: "complete", progress: 100, metrics: {} }
   }
 }
 

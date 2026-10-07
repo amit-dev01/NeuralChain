@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import {
@@ -525,9 +525,11 @@ function AlertRow({ alert, idx, expanded, onExpand, onStatusChange, onOpenDrawer
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AlertsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialSearch = searchParams.get("search") || searchParams.get("country") || searchParams.get("wallet") || ""
 
   // ── State ──
-  const [search,         setSearch]         = useState("")
+  const [search,         setSearch]         = useState(initialSearch)
   const [filterRisk,     setFilterRisk]     = useState("all")
   const [filterModel,    setFilterModel]    = useState("all")
   const [filterStatus,   setFilterStatus]   = useState("all")

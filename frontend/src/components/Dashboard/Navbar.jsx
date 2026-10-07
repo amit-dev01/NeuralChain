@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { label: 'Alerts', to: '/alerts' },
   { label: 'Timeline', to: '/timeline' },
   { label: 'GeoMap', to: '/geomap' },
+  { label: 'Models', to: '/models' },
   { label: 'Ingest', to: '/ingest' },
   { label: 'Reports', to: '/reports' },
   { label: 'Docs', to: '/docs' },

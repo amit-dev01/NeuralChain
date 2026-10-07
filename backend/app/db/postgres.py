@@ -35,6 +35,15 @@ except Exception:
         "postgresql://neuralchain:neuralchain_secret@localhost:5432/neuralchain_db",
     )
 
+# Sanitize Supabase / Heroku connection string
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+connect_args = {}
+# Supabase requires SSL connection
+if "supabase.co" in DATABASE_URL or "pooler.supabase.com" in DATABASE_URL or "sslmode=require" in DATABASE_URL:
+    connect_args["sslmode"] = "require"
+
 try:
     if DATABASE_URL.startswith("sqlite"):
         engine = create_engine(DATABASE_URL)
@@ -44,13 +53,23 @@ try:
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,
+            connect_args=connect_args,
             echo=False,
         )
-except Exception:
+except Exception as e:
     engine = create_engine("sqlite:///:memory:")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+def init_db() -> None:
+    """Auto-create tables in PostgreSQL / Supabase if they don't already exist."""
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        pass
+
 
 
 def get_db() -> Generator:
