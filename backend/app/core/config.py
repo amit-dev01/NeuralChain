@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # ML & Anomaly Detection Settings
     MLFLOW_TRACKING_URI: str = "file:///app/data/mlruns"
     MLFLOW_EXPERIMENT_NAME: str = "sih26146"
-    MODEL_STORE_PATH: str = "/app/data/models"
+    MODEL_STORE_PATH: str = "models"
     ISOLATION_FOREST_CONTAMINATION: float = 0.05
     AUTOENCODER_LATENT_DIM: int = 16
     AUTOENCODER_EPOCHS: int = 50

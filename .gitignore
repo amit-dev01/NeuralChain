@@ -9,12 +9,19 @@ node_modules/
 dist/
 build/
 *.log
+# Keep large raw datasets ignored
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 data/geoip/*.mmdb
-backend/models/*.pkl
-backend/models/*.onnx
-backend/models/*.pt
+
+# Whitelist production model weights in backend/models for Render deployment
+!backend/models/*.pkl
+!backend/models/*.pt
+!backend/models/*.json
+!backend/models/*.joblib
+!backend/models/*.png
+
 .DS_Store
+

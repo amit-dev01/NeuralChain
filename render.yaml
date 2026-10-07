@@ -14,6 +14,8 @@ services:
         value: production
       - key: DEBUG
         value: "false"
+      - key: MODEL_STORE_PATH
+        value: models
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
@@ -52,6 +54,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: MODEL_STORE_PATH
+        value: models
       - key: DATABASE_URL
         fromDatabase:
           name: neuralchain-postgres

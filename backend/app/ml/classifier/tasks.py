@@ -125,6 +125,13 @@ def run_classification_task(self, dataset_id: str) -> Dict[str, Any]:
         # 5. Train or load RansomwareClassifier
         os.makedirs(settings.MODEL_STORE_PATH, exist_ok=True)
         model_path = os.path.join(settings.MODEL_STORE_PATH, f"xgboost_{dataset_id}.json")
+        if not os.path.exists(model_path):
+            for candidate in ["xgboost_model.json", "xgboost.json", "xgboost_default.json"]:
+                cand_path = os.path.join(settings.MODEL_STORE_PATH, candidate)
+                if os.path.exists(cand_path):
+                    model_path = cand_path
+                    break
+
         classifier = RansomwareClassifier(n_estimators=100, max_depth=5)
 
         if os.path.exists(model_path):

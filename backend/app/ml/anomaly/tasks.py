@@ -101,6 +101,13 @@ def run_anomaly_detection_task(self, dataset_id: str) -> Dict[str, Any]:
         # 5. Train / load IsolationForest
         os.makedirs(settings.MODEL_STORE_PATH, exist_ok=True)
         if_model_path = os.path.join(settings.MODEL_STORE_PATH, f"if_{dataset_id}.joblib")
+        if not os.path.exists(if_model_path):
+            for candidate in ["isolation_forest.pkl", "isolation_forest.joblib", "if_default.joblib"]:
+                cand_path = os.path.join(settings.MODEL_STORE_PATH, candidate)
+                if os.path.exists(cand_path):
+                    if_model_path = cand_path
+                    break
+
         if_detector = IsolationForestDetector(
             contamination=settings.ISOLATION_FOREST_CONTAMINATION
         )
@@ -118,6 +125,13 @@ def run_anomaly_detection_task(self, dataset_id: str) -> Dict[str, Any]:
 
         # 6. Train / load Autoencoder
         ae_model_path = os.path.join(settings.MODEL_STORE_PATH, f"ae_{dataset_id}.pt")
+        if not os.path.exists(ae_model_path):
+            for candidate in ["autoencoder.pt", "ae_default.pt"]:
+                cand_path = os.path.join(settings.MODEL_STORE_PATH, candidate)
+                if os.path.exists(cand_path):
+                    ae_model_path = cand_path
+                    break
+
         ae_detector = AutoencoderDetector(
             input_dim=len(FEATURE_COLUMNS),
             latent_dim=settings.AUTOENCODER_LATENT_DIM,

@@ -265,12 +265,23 @@ class AutoencoderDetector:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file not found at '{path}'")
         data = torch.load(path, map_location=self.device)
-        self.input_dim = data["input_dim"]
-        self.latent_dim = data["latent_dim"]
-        if HAS_TORCH:
-            self.model = AnomalyAutoencoder(self.input_dim, self.latent_dim)
-            self.model.load_state_dict(data["model_state"])
-            self.model.to(self.device)
-        self.scaler = data["scaler"]
-        self.threshold = data["threshold"]
+        if isinstance(data, dict) and "model_state" in data:
+            self.input_dim = data.get("input_dim", self.input_dim)
+            self.latent_dim = data.get("latent_dim", self.latent_dim)
+            if HAS_TORCH:
+                self.model = AnomalyAutoencoder(self.input_dim, self.latent_dim)
+                self.model.load_state_dict(data["model_state"])
+                self.model.to(self.device)
+            self.scaler = data.get("scaler", self.scaler)
+            self.threshold = data.get("threshold", self.threshold)
+        elif isinstance(data, dict):
+            # Raw state_dict
+            if HAS_TORCH:
+                try:
+                    if self.model is None:
+                        self.model = AnomalyAutoencoder(self.input_dim, self.latent_dim)
+                    self.model.load_state_dict(data)
+                    self.model.to(self.device)
+                except Exception as e:
+                    logger.warning("Could not load state_dict directly: %s", e)
         logger.info("Loaded Autoencoder model from '%s'", path)

@@ -112,6 +112,15 @@ class IsolationForestDetector:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file not found at '{path}'")
         data = joblib.load(path)
-        self.model = data["model"]
-        self.scaler = data["scaler"]
+        if isinstance(data, dict):
+            self.model = data.get("model")
+            self.scaler = data.get("scaler")
+        else:
+            self.model = data
+            scaler_path = os.path.join(os.path.dirname(path), "scaler.pkl")
+            if os.path.exists(scaler_path):
+                try:
+                    self.scaler = joblib.load(scaler_path)
+                except Exception:
+                    pass
         logger.info("Loaded IsolationForest model from '%s'", path)
