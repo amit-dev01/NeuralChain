@@ -35,9 +35,12 @@ def get_driver() -> Driver:
     """Get or create the singleton Neo4j driver instance."""
     global _driver
     if _driver is None:
+        uri = os.getenv("NEO4J_URI", NEO4J_URI)
+        user = os.getenv("NEO4J_USER", NEO4J_USER)
+        pwd = os.getenv("NEO4J_PASSWORD", NEO4J_PASSWORD)
         _driver = GraphDatabase.driver(
-            NEO4J_URI,
-            auth=(NEO4J_USER, NEO4J_PASSWORD),
+            uri,
+            auth=(user, pwd),
         )
     return _driver
 
@@ -55,10 +58,11 @@ def close_driver() -> None:
 
 
 @contextmanager
-def get_neo4j_session(database: str = "neo4j") -> Generator[Session, None, None]:
+def get_neo4j_session(database: Optional[str] = None) -> Generator[Session, None, None]:
     """Context manager yielding a Neo4j session with auto-closure."""
+    target_db = database or os.getenv("NEO4J_DATABASE", None)
     driver = get_driver()
-    session = driver.session(database=database)
+    session = driver.session(database=target_db) if target_db else driver.session()
     try:
         yield session
     finally:
@@ -68,12 +72,14 @@ def get_neo4j_session(database: str = "neo4j") -> Generator[Session, None, None]
 def ping() -> bool:
     """Verify connectivity by running RETURN 1 (never raises)."""
     try:
+        driver = get_driver()
+        driver.verify_connectivity()
         with get_neo4j_session() as session:
             result = session.run("RETURN 1 AS num")
             record = result.single()
             return bool(record and record["num"] == 1)
     except Exception as e:
-        logger.debug("Neo4j ping check failed: %s", e)
+        logger.warning("Neo4j ping check failed: %s", e)
         return False
 
 
