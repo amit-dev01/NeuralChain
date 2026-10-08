@@ -42,7 +42,7 @@ def _fetch_from_mempool(
     address: str,
     base_url: str = "https://mempool.space/api",
     limit: int = 25,
-    timeout: float = 12.0,
+    timeout: float = 6.0,
 ) -> Optional[BlockchainAddressReport]:
     """Fetch live address statistics and transaction ledger from Mempool/Blockstream API."""
     stats_url = f"{base_url}/address/{address}"
@@ -136,7 +136,7 @@ def _fetch_from_mempool(
 def _fetch_from_blockchain_info(
     address: str,
     limit: int = 25,
-    timeout: float = 12.0,
+    timeout: float = 6.0,
 ) -> Optional[BlockchainAddressReport]:
     """Fetch live address statistics and transaction ledger from Blockchain.info rawaddr."""
     url = f"https://blockchain.info/rawaddr/{address}?limit={limit}"
@@ -219,7 +219,7 @@ def _fetch_from_blockchain_info(
 def fetch_address_report(
     address: str,
     limit: int = 25,
-    timeout: float = 12.0,
+    timeout: float = 6.0,
 ) -> BlockchainAddressReport:
     """
     Query authoritative Bitcoin mainnet explorer APIs (Mempool.space, Blockchain.info,

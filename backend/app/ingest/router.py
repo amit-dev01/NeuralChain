@@ -227,18 +227,22 @@ def investigate_address(
     db.add(alert)
     db.commit()
 
-    # 6. Ingest full graph topology into Neo4j
-    try:
-        from app.graph.builder import build_graph_from_transactions
-        from app.db.neo4j_client import run_query
-        build_graph_from_transactions(records, dataset_id=str(dataset.id))
-        run_query(
-            "MERGE (w:Wallet {address: $address}) SET w.risk_score = $risk, w.risk_level = $level, w.tx_count = $cnt",
-            {"address": clean_addr, "risk": risk_score, "level": risk_level, "cnt": total_tx_count},
-        )
-        logger.info("Successfully ingested %d records into Neo4j for %s", len(records), clean_addr)
-    except Exception as n4j_err:
-        logger.warning("Neo4j graph ingestion skipped: %s", n4j_err)
+    # 6. Ingest full graph topology into Neo4j asynchronously in background thread
+    def _async_neo4j_sync():
+        try:
+            from app.graph.builder import build_graph_from_transactions
+            from app.db.neo4j_client import run_query
+            build_graph_from_transactions(records, dataset_id=str(dataset.id))
+            run_query(
+                "MERGE (w:Wallet {address: $address}) SET w.risk_score = $risk, w.risk_level = $level, w.tx_count = $cnt",
+                {"address": clean_addr, "risk": risk_score, "level": risk_level, "cnt": total_tx_count},
+            )
+            logger.info("Successfully ingested %d records into Neo4j for %s", len(records), clean_addr)
+        except Exception as n4j_err:
+            logger.warning("Neo4j background graph ingestion skipped: %s", n4j_err)
+
+    import threading
+    threading.Thread(target=_async_neo4j_sync, daemon=True).start()
 
     # 7. Clear Redis stats cache to reflect updated counts immediately
     try:
