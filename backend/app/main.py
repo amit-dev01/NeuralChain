@@ -202,7 +202,7 @@ async def health():
     return {
         "status": "ok" if all_ok else "degraded",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "version": "1.0.0",
+        "version": "1.0.3-fast-ingest",
         "services": {
             "postgres": pg,
             "redis": r,
