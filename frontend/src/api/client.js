@@ -20,20 +20,19 @@ export const api = axios.create({
 
 // ─── INVESTIGATION LOCAL STORAGE CACHE HELPERS ────────────────────────────────
 export function saveInvestigatedAddress(dossier) {
-  if (!dossier?.address) return
+  if (!dossier?.address || typeof window === 'undefined' || typeof localStorage === 'undefined') return
   try {
     localStorage.setItem('neuralchain:latest_investigation', JSON.stringify(dossier))
     const history = JSON.parse(localStorage.getItem('neuralchain:investigated_history') || '[]')
     const filtered = history.filter(h => h.address !== dossier.address)
     filtered.unshift(dossier)
     localStorage.setItem('neuralchain:investigated_history', JSON.stringify(filtered.slice(0, 15)))
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('neuralchain:investigation_updated', { detail: dossier }))
-    }
+    window.dispatchEvent(new CustomEvent('neuralchain:investigation_updated', { detail: dossier }))
   } catch (_) {}
 }
 
 export function getLatestInvestigation() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null
   try {
     const raw = localStorage.getItem('neuralchain:latest_investigation')
     return raw ? JSON.parse(raw) : null
@@ -43,6 +42,7 @@ export function getLatestInvestigation() {
 }
 
 export function getInvestigatedHistory() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return []
   try {
     const raw = localStorage.getItem('neuralchain:investigated_history')
     return raw ? JSON.parse(raw) : []

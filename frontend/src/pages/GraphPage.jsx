@@ -313,10 +313,16 @@ export default function GraphPage() {
   const [highlightIds, setHighlightIds] = useState(new Set())
   const [toast, setToast]               = useState(null)
   const [physicsOff, setPhysicsOff]     = useState(false)
-  const latestCached = getLatestInvestigation()
-  const initialData = latestCached
-    ? buildGraphFromInvestigation(latestCached)
-    : MOCK_GRAPH
+  const initialData = useMemo(() => {
+    try {
+      const latestCached = getLatestInvestigation()
+      if (latestCached) {
+        const built = buildGraphFromInvestigation(latestCached)
+        if (built?.nodes?.length) return built
+      }
+    } catch (_) {}
+    return MOCK_GRAPH || { nodes: [], links: [] }
+  }, [])
 
   const [graphData, setGraphData]       = useState(initialData)
 
@@ -352,35 +358,11 @@ export default function GraphPage() {
     return () => { active = false; clearTimeout(timeout) }
   }, [search, riskRange])
 
-  // Auto-center on searched target node
-  useEffect(() => {
-    if (!search.trim() || !filteredNodes.length || !fgRef.current) return
-    const s = search.trim().toLowerCase()
-    const target = filteredNodes.find(n =>
-      n.id?.toLowerCase() === s ||
-      n.fullLabel?.toLowerCase() === s ||
-      n.label?.toLowerCase().includes(s)
-    )
-    if (target && typeof target.x === 'number') {
-      const t = setTimeout(() => {
-        fgRef.current?.centerAt(target.x, target.y, 600)
-        fgRef.current?.zoom(2.0, 600)
-      }, 400)
-      return () => clearTimeout(t)
-    }
-  }, [search, filteredNodes])
-
-  // Turn off physics after 3s
-  useEffect(() => {
-    const t = setTimeout(() => setPhysicsOff(true), 3000)
-    return () => clearTimeout(t)
-  }, [])
-
   // ── Filtered graph data ──
   const { nodes: filteredNodes, links: filteredLinks } = useMemo(() => {
     const rawNodes = graphData?.nodes || []
     const rawLinks = graphData?.links || []
-    const searchTrimmed = search.trim().toLowerCase()
+    const searchTrimmed = (search || '').trim().toLowerCase()
 
     // 1. Identify directly matching nodes
     const directMatches = new Set()
@@ -428,13 +410,37 @@ export default function GraphPage() {
     return { nodes, links }
   }, [graphData, nodeTypes, edgeTypes, riskRange, search])
 
+  // Auto-center on searched target node
+  useEffect(() => {
+    if (!search?.trim() || !filteredNodes?.length || !fgRef.current) return
+    const s = search.trim().toLowerCase()
+    const target = filteredNodes.find(n =>
+      n.id?.toLowerCase() === s ||
+      n.fullLabel?.toLowerCase() === s ||
+      n.label?.toLowerCase().includes(s)
+    )
+    if (target && typeof target.x === 'number') {
+      const t = setTimeout(() => {
+        fgRef.current?.centerAt(target.x, target.y, 600)
+        fgRef.current?.zoom(2.0, 600)
+      }, 400)
+      return () => clearTimeout(t)
+    }
+  }, [search, filteredNodes])
+
+  // Turn off physics after 3s
+  useEffect(() => {
+    const t = setTimeout(() => setPhysicsOff(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
   // ── Node canvas drawing ──
   const drawNode = useCallback((node, ctx, globalScale) => {
     const r          = 7
     const nodeRisk   = typeof node.risk === 'number' ? node.risk : (typeof node.risk_score === 'number' ? node.risk_score : 0.2)
     const isHigh     = nodeRisk > 0.8
     const isSelected = highlightIds.size > 0 && !highlightIds.has(node.id)
-    const isSearch   = search.trim() && (node.label.toLowerCase().includes(search.toLowerCase()) || node.fullLabel?.toLowerCase().includes(search.toLowerCase()))
+    const isSearch   = search.trim() && (node.label?.toLowerCase().includes(search.toLowerCase()) || node.fullLabel?.toLowerCase().includes(search.toLowerCase()))
     const alpha      = isSelected ? 0.1 : 1
 
     ctx.globalAlpha = alpha
@@ -484,7 +490,7 @@ export default function GraphPage() {
       ctx.font        = `${Math.max(8, 10 / globalScale)}px JetBrains Mono, monospace`
       ctx.textAlign   = "center"
       ctx.textBaseline = "top"
-      ctx.fillText(node.label, node.x, node.y + r + 2)
+      ctx.fillText(node.label || node.fullLabel || node.id || "", node.x, node.y + r + 2)
     }
 
     ctx.globalAlpha = 1
