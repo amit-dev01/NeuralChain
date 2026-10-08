@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useVirtualizer } from "@tanstack/react-virtual"
@@ -36,7 +36,7 @@ import {
   AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
 
-import { MOCK_ALERTS, TREND_DATA } from "@/data/alertsMockData"
+import { TREND_DATA } from "@/data/alertsMockData"
 import { getAlerts, updateAlertStatus, explainAlertWithAI } from "@/api/client"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -541,18 +541,18 @@ export default function AlertsPage() {
   const [expandedRow,    setExpandedRow]    = useState(null)
   const [drawerAlert,    setDrawerAlert]    = useState(null)
   const [toast,          setToast]          = useState(null)
-  const [alerts,         setAlerts]         = useState(MOCK_ALERTS)
+  const [alerts,         setAlerts]         = useState([])
 
   // ── Live Query ──
-  const { data: serverAlerts } = useQuery({
+  const { data: serverAlerts, isLoading: alertsLoading } = useQuery({
     queryKey: ["alerts-list", filterRisk, filterModel, filterStatus],
     queryFn: () => getAlerts({ limit: 100 }),
   })
 
   // Synchronize when server response arrives
-  useMemo(() => {
-    const items = serverAlerts?.items || serverAlerts?.data
-    if (Array.isArray(items) && items.length > 0) {
+  useEffect(() => {
+    const items = serverAlerts?.items || serverAlerts?.alerts || serverAlerts?.data
+    if (Array.isArray(items)) {
       setAlerts(items)
     }
   }, [serverAlerts])
@@ -681,7 +681,7 @@ export default function AlertsPage() {
             </h1>
             <p className="text-xs text-zinc-400 mt-1 font-light tracking-wide">
               <span className="text-red-400 font-semibold font-mono">{filtered.length}</span> active alerts across{" "}
-              <span className="text-amber-400 font-semibold font-mono">83</span> high-risk entities
+              <span className="text-amber-400 font-semibold font-mono">{alerts.filter(a => (a.risk || a.risk_score || 0) >= 0.7).length}</span> high-risk entities
             </p>
           </div>
           <div className="flex gap-2">
@@ -821,17 +821,46 @@ export default function AlertsPage() {
                 </tr>
               </thead>
               <tbody>
-                {paged.map((alert, idx) => (
-                  <AlertRow
-                    key={alert.id}
-                    alert={alert}
-                    idx={(page-1)*PAGE_SIZE + idx}
-                    expanded={expandedRow === alert.id}
-                    onExpand={id => setExpandedRow(prev => prev === id ? null : id)}
-                    onStatusChange={handleStatusChange}
-                    onOpenDrawer={setDrawerAlert}
-                  />
-                ))}
+                {paged.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-16 text-zinc-500">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+                          <ShieldAlert className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-zinc-300">
+                            {alertsLoading ? "Loading real-time alerts..." : "No alerts recorded yet"}
+                          </p>
+                          <p className="text-xs text-zinc-500 mt-0.5">
+                            {alertsLoading
+                              ? "Fetching on-chain detection records from backend..."
+                              : "Ingest a target Bitcoin address using the address search bar to trigger on-chain ML threat detection."}
+                          </p>
+                        </div>
+                        {!alertsLoading && (
+                          <Link to="/graph">
+                            <Button variant="outline" size="sm" className="mt-2 text-xs rounded-full border-white/10 hover:bg-white/5">
+                              Go to Graph &amp; Investigate Address
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paged.map((alert, idx) => (
+                    <AlertRow
+                      key={alert.id}
+                      alert={alert}
+                      idx={(page-1)*PAGE_SIZE + idx}
+                      expanded={expandedRow === alert.id}
+                      onExpand={id => setExpandedRow(prev => prev === id ? null : id)}
+                      onStatusChange={handleStatusChange}
+                      onOpenDrawer={setDrawerAlert}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>

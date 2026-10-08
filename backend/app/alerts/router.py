@@ -112,6 +112,7 @@ def list_alerts(
             model_source=a.model_source,
             top_reasons=a.top_reasons or [],
             evidence_txids=a.evidence_txids or [],
+            shap_values=a.shap_values,
             status=AlertStatus(a.status.lower()) if a.status else AlertStatus.NEW,
             created_at=a.created_at,
             updated_at=a.updated_at,
@@ -121,6 +122,7 @@ def list_alerts(
 
     return PaginatedAlerts(
         alerts=alert_responses,
+        items=alert_responses,
         total=total_count,
         page=page,
         pages=total_pages,
@@ -239,6 +241,7 @@ def update_alert_status(
         model_source=alert.model_source,
         top_reasons=alert.top_reasons or [],
         evidence_txids=alert.evidence_txids or [],
+        shap_values=alert.shap_values,
         status=AlertStatus(alert.status.lower()),
         created_at=alert.created_at,
         updated_at=alert.updated_at,

@@ -2,11 +2,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session
 
 from app.db.neo4j_client import get_neo4j_session
-from app.db.postgres import Entity, get_db
+from app.db.postgres import Alert, Entity, Transaction, get_db
 from app.graph.queries import (
     get_ego_graph,
     get_fan_out_transactions,
@@ -20,38 +20,139 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="", tags=["graph"])
 
 
+def _build_graph_from_postgres(db: Session, target_wallet: Optional[str] = None, limit: int = 50) -> Dict[str, Any]:
+    """Build real graph topology directly from PostgreSQL transactions ledger."""
+    query = db.query(Transaction)
+    if target_wallet:
+        query = query.filter(
+            or_(
+                cast(Transaction.input_addresses, String).contains(target_wallet),
+                cast(Transaction.output_addresses, String).contains(target_wallet),
+            )
+        )
+    txs = query.order_by(Transaction.timestamp.desc()).limit(limit).all()
+    if not txs:
+        return {"nodes": [], "links": []}
+
+    alerts = db.query(Alert).all()
+    alert_map = {a.wallet_id: float(a.risk_score) for a in alerts}
+    entities = db.query(Entity).all()
+    entity_map = {e.wallet_address: e for e in entities}
+
+    nodes = {}
+    links = []
+
+    for tx in txs:
+        tx_id = f"tx_{tx.txid[:16]}"
+        nodes[tx_id] = {
+            "id": tx_id,
+            "type": "transaction",
+            "label": f"{tx.txid[:8]}...",
+            "fullLabel": tx.txid,
+            "fee": tx.fee,
+            "timestamp": tx.timestamp.isoformat() if tx.timestamp else None,
+            "risk": 0.25,
+        }
+
+        # Input wallets
+        in_addrs = tx.input_addresses if isinstance(tx.input_addresses, list) else []
+        for in_addr in in_addrs[:4]:
+            if not in_addr:
+                continue
+            w_id = str(in_addr)
+            if w_id not in nodes:
+                ent = entity_map.get(w_id)
+                risk = alert_map.get(w_id, float(ent.risk_score) if ent else (0.45 if w_id == target_wallet else 0.20))
+                nodes[w_id] = {
+                    "id": w_id,
+                    "type": "wallet",
+                    "label": f"{w_id[:10]}...",
+                    "fullLabel": w_id,
+                    "risk": round(risk, 3),
+                    "cluster": ent.cluster_id if (ent and ent.cluster_id) else 1,
+                    "totalSent": ent.total_sent if ent else 0.0,
+                    "totalReceived": ent.total_received if ent else 0.0,
+                    "txCount": ent.tx_count if ent else 1,
+                    "entityLabel": ent.entity_label if ent else ("Target Subject" if w_id == target_wallet else "Monitored Wallet"),
+                }
+            links.append({
+                "source": w_id,
+                "target": tx_id,
+                "type": "SENT",
+            })
+
+        # Output wallets
+        out_addrs = tx.output_addresses if isinstance(tx.output_addresses, list) else []
+        for out_addr in out_addrs[:4]:
+            if not out_addr:
+                continue
+            w_id = str(out_addr)
+            if w_id not in nodes:
+                ent = entity_map.get(w_id)
+                risk = alert_map.get(w_id, float(ent.risk_score) if ent else (0.35 if w_id == target_wallet else 0.15))
+                nodes[w_id] = {
+                    "id": w_id,
+                    "type": "wallet",
+                    "label": f"{w_id[:10]}...",
+                    "fullLabel": w_id,
+                    "risk": round(risk, 3),
+                    "cluster": ent.cluster_id if (ent and ent.cluster_id) else 2,
+                    "totalSent": ent.total_sent if ent else 0.0,
+                    "totalReceived": ent.total_received if ent else 0.0,
+                    "txCount": ent.tx_count if ent else 1,
+                    "entityLabel": ent.entity_label if ent else ("Target Subject" if w_id == target_wallet else "Monitored Wallet"),
+                }
+            links.append({
+                "source": tx_id,
+                "target": w_id,
+                "type": "RECEIVED",
+            })
+
+    return {
+        "nodes": list(nodes.values()),
+        "links": links,
+    }
+
+
 @router.get(
     "/nodes",
     summary="Query ego-network graph centered on a starting wallet address",
 )
 def get_graph_nodes(
-    start: str = Query(..., description="Target starting wallet address"),
+    start: Optional[str] = Query(None, description="Target starting wallet address"),
     depth: int = Query(2, ge=1, le=4, description="Graph traversal search radius (1-4)"),
     risk_min: float = Query(0.0, ge=0.0, description="Minimum risk score filter"),
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
-    """Retrieve ego graph nodes and links surrounding start address, filtered by risk threshold."""
-    cypher, params = get_ego_graph(wallet_id=start, depth=depth)
+    """Retrieve ego graph nodes and links, filtered by risk threshold."""
+    graph_data = {"nodes": [], "links": []}
 
+    # 1. Try Neo4j graph first
     try:
         with get_neo4j_session() as session:
+            if start:
+                cypher, params = get_ego_graph(wallet_id=start, depth=depth)
+            else:
+                cypher = "MATCH path = (w:Wallet)-[r]->(t:Transaction) RETURN path LIMIT 60"
+                params = {}
             result = session.run(cypher, params)
             records = list(result)
-            graph_data = neo4j_result_to_graph_json(records)
+            if records:
+                graph_data = neo4j_result_to_graph_json(records)
     except Exception as e:
-        logger.warning("Neo4j query error on /nodes for %s: %s", start, e)
-        return {
-            "nodes": [],
-            "links": [],
-            "meta": {"node_count": 0, "link_count": 0, "message": str(e)},
-        }
+        logger.info("Neo4j query skipped or empty (%s), using PostgreSQL ledger...", e)
+
+    # 2. Fallback to real PostgreSQL transaction topology if Neo4j returned nothing
+    if not graph_data or not graph_data.get("nodes"):
+        graph_data = _build_graph_from_postgres(db, target_wallet=start, limit=40)
 
     # Filter nodes by minimum risk threshold
     nodes = [
-        n for n in graph_data["nodes"] if float(n.get("risk_score", 0.0) or 0.0) >= risk_min
+        n for n in graph_data.get("nodes", []) if float(n.get("risk", n.get("risk_score", 0.0)) or 0.0) >= risk_min
     ]
     valid_ids = {n["id"] for n in nodes}
     links = [
-        l for l in graph_data["links"] if l["source"] in valid_ids and l["target"] in valid_ids
+        l for l in graph_data.get("links", []) if l["source"] in valid_ids and l["target"] in valid_ids
     ]
 
     return {

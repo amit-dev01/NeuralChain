@@ -21,22 +21,13 @@ import {
 
 import { getOverviewStats, getIngestionRate, getAlerts, getMLModels } from "@/api/client"
 
-// ─── Fallback mock data ───────────────────────────────────────────────────────
+// ─── Zero-state fallback data ──────────────────────────────────────────────────
 const DEFAULT_KPI_DATA = [
-  { label: "Transactions Ingested", value: 142857, icon: Database, color: "blue-500", border: "border-l-blue-500", change: "+12%", up: true },
-  { label: "Unique Wallets Detected", value: 38291,  icon: Wallet,       color: "violet-500", border: "border-l-violet-500", change: "+8%",  up: true },
-  { label: "Active Alerts",           value: 247,    icon: ShieldAlert,  color: "red-500",    border: "border-l-red-500",    change: "+34%", up: false },
-  { label: "High-Risk Entities",      value: 83,     icon: TriangleAlert,color: "amber-500",  border: "border-l-amber-500",  change: "-5%",  up: true },
-  { label: "Models Running",          value: 4,      icon: BrainCircuit, color: "emerald-500",border: "border-l-emerald-500", change: "Stable", up: true },
-]
-
-const DEFAULT_ALERT_ROWS = [
-  { wallet: "1A1zP1eP5QGefi2", score: 0.97, reason: "Fan-out mixing (83 outputs)",  time: "2 min ago"  },
-  { wallet: "3J98t1WpEZ73CNm", score: 0.91, reason: "Rapid IP reuse (47 TXs/2min)", time: "5 min ago"  },
-  { wallet: "bc1qxy2kgdygjrs", score: 0.88, reason: "Round-amount pattern (1.0 BTC)",time: "11 min ago" },
-  { wallet: "1BpEi6DfDAUFd4",  score: 0.74, reason: "Peel chain depth 12",          time: "18 min ago" },
-  { wallet: "3FZbgi29cpjq2Gj", score: 0.61, reason: "Known darknet cluster #14",    time: "25 min ago" },
-  { wallet: "bc1qar0srrr7xfkv", score: 0.53, reason: "Unusual fee spike (3.2σ)",    time: "31 min ago" },
+  { label: "Transactions Ingested", value: 0, icon: Database, color: "blue-500", border: "border-l-blue-500", change: "Live", up: true },
+  { label: "Unique Wallets Detected", value: 0, icon: Wallet, color: "violet-500", border: "border-l-violet-500", change: "Live", up: true },
+  { label: "Active Alerts", value: 0, icon: ShieldAlert, color: "red-500", border: "border-l-red-500", change: "None", up: false },
+  { label: "High-Risk Entities", value: 0, icon: TriangleAlert, color: "amber-500", border: "border-l-amber-500", change: "Clear", up: true },
+  { label: "Models Running", value: 4, icon: BrainCircuit, color: "emerald-500", border: "border-l-emerald-500", change: "Active", up: true },
 ]
 
 const DEFAULT_MODEL_STATUS = [
@@ -145,11 +136,11 @@ export default function OverviewPage() {
   const stats = useMemo(() => {
     if (!statsRaw) return DEFAULT_KPI_DATA
     return [
-      { label: "Transactions Ingested", value: statsRaw.total_transactions || 142857, icon: Database, color: "blue-500", border: "border-l-blue-500", change: "+12%", up: true },
-      { label: "Unique Wallets Detected", value: statsRaw.unique_wallets || 38291, icon: Wallet, color: "violet-500", border: "border-l-violet-500", change: "+8%", up: true },
-      { label: "Active Alerts", value: statsRaw.active_alerts || 247, icon: ShieldAlert, color: "red-500", border: "border-l-red-500", change: "+34%", up: false },
-      { label: "High-Risk Entities", value: statsRaw.high_risk_entities || 83, icon: TriangleAlert, color: "amber-500", border: "border-l-amber-500", change: "-5%", up: true },
-      { label: "Models Running", value: statsRaw.models_running || 4, icon: BrainCircuit, color: "emerald-500", border: "border-l-emerald-500", change: "Stable", up: true },
+      { label: "Transactions Ingested", value: statsRaw.total_transactions ?? 0, icon: Database, color: "blue-500", border: "border-l-blue-500", change: statsRaw.total_transactions > 0 ? "Live" : "0", up: true },
+      { label: "Unique Wallets Detected", value: statsRaw.unique_wallets ?? 0, icon: Wallet, color: "violet-500", border: "border-l-violet-500", change: statsRaw.unique_wallets > 0 ? "Live" : "0", up: true },
+      { label: "Active Alerts", value: statsRaw.active_alerts ?? 0, icon: ShieldAlert, color: "red-500", border: "border-l-red-500", change: statsRaw.active_alerts > 0 ? `${statsRaw.active_alerts} Active` : "None", up: false },
+      { label: "High-Risk Entities", value: statsRaw.high_risk_entities ?? 0, icon: TriangleAlert, color: "amber-500", border: "border-l-amber-500", change: statsRaw.high_risk_entities > 0 ? "Flagged" : "Clear", up: true },
+      { label: "Models Running", value: statsRaw.models_running ?? 4, icon: BrainCircuit, color: "emerald-500", border: "border-l-emerald-500", change: "Active", up: true },
     ]
   }, [statsRaw])
 
@@ -160,12 +151,12 @@ export default function OverviewPage() {
   })
 
   const alertRows = useMemo(() => {
-    const items = alertsRes?.items || alertsRes?.data || alertsRes
-    if (!Array.isArray(items) || items.length === 0) return DEFAULT_ALERT_ROWS
+    const items = alertsRes?.items || alertsRes?.alerts || alertsRes?.data
+    if (!Array.isArray(items) || items.length === 0) return []
     return items.slice(0, 6).map((a) => ({
-      wallet: a.wallet || a.wallet_id || a.id || "1A1zP1eP5QGefi2",
-      score: a.risk ?? a.risk_score ?? 0.85,
-      reason: a.reasons?.[0]?.label || a.top_reasons?.[0] || "Velocity anomaly",
+      wallet: a.wallet || a.wallet_id || a.id || "Unknown",
+      score: a.risk ?? a.risk_score ?? 0.0,
+      reason: a.reasons?.[0]?.label || a.top_reasons?.[0] || "Suspicious transaction pattern",
       time: a.timestamp ? "Recently" : "2 min ago",
     }))
   }, [alertsRes])
@@ -285,33 +276,45 @@ export default function OverviewPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {alertRows.map((row, i) => (
-                      <TableRow key={i} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                        <TableCell>
-                          <code className="font-mono text-xs text-zinc-300 bg-slate-900/90 border border-white/10 px-2 py-0.5 rounded-md">
-                            {row.wallet.slice(0, 12)}...
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <RiskBadge score={row.score} />
-                        </TableCell>
-                        <TableCell className="text-xs text-zinc-300 max-w-[180px] truncate">
-                          {row.reason}
-                        </TableCell>
-                        <TableCell className="text-xs text-zinc-500">{row.time}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate("/alerts")}
-                            className="text-xs h-7 rounded-full border-white/10 hover:border-white/20 hover:bg-white/5"
-                          >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            Inspect
-                          </Button>
+                    {alertRows.length === 0 ? (
+                      <TableRow className="border-b border-white/5 hover:bg-transparent">
+                        <TableCell colSpan={5} className="text-center py-8 text-zinc-500">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <ShieldAlert className="h-6 w-6 text-zinc-600" />
+                            <p className="text-xs font-medium text-zinc-400">No active alerts recorded</p>
+                            <p className="text-[11px] text-zinc-600">Ingest a Bitcoin address above to trigger threat detection.</p>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      alertRows.map((row, i) => (
+                        <TableRow key={i} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                          <TableCell>
+                            <code className="font-mono text-xs text-zinc-300 bg-slate-900/90 border border-white/10 px-2 py-0.5 rounded-md">
+                              {row.wallet.slice(0, 12)}...
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            <RiskBadge score={row.score} />
+                          </TableCell>
+                          <TableCell className="text-xs text-zinc-300 max-w-[180px] truncate">
+                            {row.reason}
+                          </TableCell>
+                          <TableCell className="text-xs text-zinc-500">{row.time}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate("/alerts")}
+                              className="text-xs h-7 rounded-full border-white/10 hover:border-white/20 hover:bg-white/5"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Inspect
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
                 <div className="flex justify-end px-5 py-3 border-t border-white/5 bg-slate-950/30">

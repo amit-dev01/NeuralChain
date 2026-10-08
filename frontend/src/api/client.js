@@ -1,10 +1,8 @@
 /**
  * NeuralChain Centralized API Client
- * Connects frontend UI to FastAPI backend endpoints with graceful fallback to mock data
+ * Connects frontend UI to FastAPI backend endpoints with real live data
  */
 import axios from 'axios'
-import { MOCK_ALERTS } from '@/data/alertsMockData'
-import { MOCK_GRAPH } from '@/data/graphMockData'
 import { PAST_REPORTS } from '@/data/reportsMockData'
 import { VOLUME_DATA } from '@/data/timelineMockData'
 import { COUNTRY_DISTRIBUTION } from '@/data/geoMockData'
@@ -26,13 +24,13 @@ export async function getOverviewStats() {
     const res = await api.get('/stats/overview')
     return res.data
   } catch (err) {
-    console.warn('[API] /stats/overview failed, using fallback:', err.message)
+    console.warn('[API] /stats/overview failed:', err.message)
     return {
-      total_transactions: 142857,
-      unique_wallets: 38291,
-      active_alerts: 247,
-      high_risk_entities: 83,
-      models_running: 4,
+      total_transactions: 0,
+      unique_wallets: 0,
+      active_alerts: 0,
+      high_risk_entities: 0,
+      models_running: 0,
       last_updated: new Date().toISOString(),
     }
   }
@@ -43,20 +41,8 @@ export async function getIngestionRate(minutes = 60) {
     const res = await api.get(`/stats/ingestion-rate?minutes=${minutes}`)
     return res.data
   } catch (err) {
-    console.warn('[API] /stats/ingestion-rate failed, using fallback:', err.message)
-    const now = new Date()
-    return Array.from({ length: minutes }, (_, i) => {
-      const t = new Date(now.getTime() - (minutes - 1 - i) * 60000)
-      const hh = String(t.getHours()).padStart(2, '0')
-      const mm = String(t.getMinutes()).padStart(2, '0')
-      let base = Math.floor(Math.random() * 120 + 80)
-      if (i >= 35 && i <= 45) base = Math.floor(Math.random() * 600 + 400)
-      return {
-        timestamp: `${hh}:${mm}`,
-        tx_count: base,
-        flagged_count: Math.floor(base * 0.08),
-      }
-    })
+    console.warn('[API] /stats/ingestion-rate failed:', err.message)
+    return []
   }
 }
 
@@ -64,8 +50,8 @@ export async function getIngestionRate(minutes = 60) {
 function normalizeAlert(item) {
   if (!item) return item
   const risk = typeof item.risk === 'number' ? item.risk : (typeof item.risk_score === 'number' ? item.risk_score : 0.5)
-  const wallet = item.wallet || item.wallet_id || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
-  const model = item.model || item.model_source || 'XGBoost'
+  const wallet = item.wallet || item.wallet_id || ''
+  const model = item.model || item.model_source || 'xgboost_ensemble'
   const status = item.status
     ? (item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('_', ' '))
     : 'New'
@@ -86,14 +72,14 @@ function normalizeAlert(item) {
 
   const evidenceTxids = Array.isArray(item.evidenceTxids) ? item.evidenceTxids : (
     Array.isArray(item.evidence_txids)
-      ? item.evidence_txids.map(txid => typeof txid === 'string' ? { txid, btc: '1.24 BTC', time: '12m ago' } : txid)
-      : [{ txid: 'tx_a8f93bc01d4e', btc: '2.50 BTC', time: '5m ago' }]
+      ? item.evidence_txids.map(txid => typeof txid === 'string' ? { txid, btc: 'On-chain', time: 'Indexed' } : txid)
+      : []
   )
 
   const reasons = Array.isArray(item.reasons) ? item.reasons : (
     Array.isArray(item.top_reasons)
       ? item.top_reasons.map(r => ({ label: typeof r === 'string' ? r : String(r), icon: 'AlertTriangle' }))
-      : [{ label: 'High velocity anomaly', icon: 'Zap' }]
+      : [{ label: 'Suspicious transaction pattern', icon: 'Zap' }]
   )
 
   return {
@@ -109,8 +95,8 @@ function normalizeAlert(item) {
     reasons,
     evidenceTxids,
     shapValues,
-    cluster: item.cluster || 'Cluster #14',
-    entityLabel: item.entityLabel || item.entity_label || 'High Risk Entity',
+    cluster: item.cluster || 'Live Ledger',
+    entityLabel: item.entityLabel || item.entity_label || (risk >= 0.8 ? 'Suspect Cartel' : 'Monitored Wallet'),
     timestamp: item.timestamp || item.created_at || new Date().toISOString(),
   }
 }
@@ -119,21 +105,23 @@ export async function getAlerts(params = {}) {
   try {
     const res = await api.get('/alerts', { params })
     const data = res.data
-    if (data && Array.isArray(data.items)) {
+    const list = data?.items || data?.alerts || []
+    if (Array.isArray(list)) {
       return {
         ...data,
-        items: data.items.map(normalizeAlert),
+        items: list.map(normalizeAlert),
+        total: typeof data?.total === 'number' ? data.total : list.length,
       }
     }
-    return data
+    return { items: [], total: 0, page: 1, limit: 25, pages: 0 }
   } catch (err) {
-    console.warn('[API] /alerts failed, using fallback:', err.message)
+    console.warn('[API] /alerts failed:', err.message)
     return {
-      items: MOCK_ALERTS.map(normalizeAlert),
-      total: MOCK_ALERTS.length,
+      items: [],
+      total: 0,
       page: params.page || 1,
       limit: params.limit || 25,
-      pages: Math.ceil(MOCK_ALERTS.length / (params.limit || 25)),
+      pages: 0,
     }
   }
 }
@@ -146,7 +134,7 @@ export async function updateAlertStatus(alertId, status, analystNotes = '') {
     })
     return res.data
   } catch (err) {
-    console.warn(`[API] /alerts/${alertId}/status failed (simulating):`, err.message)
+    console.warn(`[API] /alerts/${alertId}/status failed:`, err.message)
     return { id: alertId, status, updated_at: new Date().toISOString() }
   }
 }
@@ -155,13 +143,17 @@ export async function updateAlertStatus(alertId, status, analystNotes = '') {
 export async function getGraphNodes(startAddress, depth = 2, riskMin = 0.0) {
   try {
     const res = await api.get('/graph/nodes', {
-      params: { start: startAddress, depth, risk_min: riskMin },
+      params: {
+        ...(startAddress ? { start: startAddress } : {}),
+        depth,
+        risk_min: riskMin,
+      },
     })
-    if (res.data?.nodes?.length > 0) return res.data
-    return MOCK_GRAPH
+    if (res.data?.nodes) return res.data
+    return { nodes: [], links: [], meta: { node_count: 0, link_count: 0 } }
   } catch (err) {
-    console.warn('[API] /graph/nodes failed, using fallback:', err.message)
-    return MOCK_GRAPH
+    console.warn('[API] /graph/nodes failed:', err.message)
+    return { nodes: [], links: [], meta: { node_count: 0, link_count: 0 } }
   }
 }
 
@@ -183,31 +175,9 @@ export async function uploadDataset(formData) {
 }
 
 export async function investigateAddress(address, limit = 25) {
-  try {
-    const res = await api.post('/ingest/address', { address, limit, auto_run_ml: true })
-    return res.data
-  } catch (err) {
-    console.warn('[API] /ingest/address failed, using simulated forensic result:', err.message)
-    const clean = (address || '').trim()
-    return {
-      address: clean || '1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX',
-      script_type: clean.startsWith('bc1q') ? 'P2WPKH' : (clean.startsWith('3') ? 'P2SH' : 'P2PKH'),
-      tx_count: 12,
-      total_received_btc: 6.845,
-      total_sent_btc: 6.500,
-      final_balance_btc: 0.345,
-      risk_score: 0.88,
-      risk_level: 'critical',
-      typologies: ['peeling_chain', 'tumbler_pool', 'high_velocity'],
-      transactions: [
-        { txid: 'tx_8f4c2e19d', timestamp: new Date(Date.now() - 3600000).toISOString(), amount_btc: 2.50, fee_btc: 0.0004, inputs_count: 1, outputs_count: 2 },
-        { txid: 'tx_3b91a74ec', timestamp: new Date(Date.now() - 7200000).toISOString(), amount_btc: 4.345, fee_btc: 0.0008, inputs_count: 2, outputs_count: 2 },
-      ],
-      ai_summary: `Target ${clean.slice(0, 10)}... demonstrates high-velocity pass-through characteristics with an 88% risk posture. Automated TreeSHAP attribution identified rapid peel dissipation across 12 sequential outputs. Immediate entity freezing and subpoena issuance recommended under Section 65B of the Indian Evidence Act.`,
-      dataset_id: `ds_target_${Date.now()}`,
-      created_at: new Date().toISOString(),
-    }
-  }
+  const clean = (address || '').trim()
+  const res = await api.post('/ingest/address', { address: clean, limit, auto_run_ml: true })
+  return res.data
 }
 
 export async function getDatasets() {

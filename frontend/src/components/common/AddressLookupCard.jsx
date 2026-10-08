@@ -37,6 +37,7 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
   const [statusMessage, setStatusMessage] = useState("")
   const [result, setResult] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   const handleLookup = async (targetAddr) => {
     const addr = (targetAddr || addressInput).trim()
@@ -44,6 +45,7 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
 
     setAddressInput(addr)
     setLoading(true)
+    setErrorMessage("")
     setStatusMessage("Querying live Bitcoin mainnet via Mempool explorer...")
 
     setTimeout(() => {
@@ -59,6 +61,8 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
       setResult(data)
       if (onAnalyzed) onAnalyzed(data)
     } catch (err) {
+      const detail = err.response?.data?.detail || err.message || "Failed to investigate address"
+      setErrorMessage(typeof detail === "string" ? detail : JSON.stringify(detail))
       console.error("Address investigation error:", err)
     } finally {
       setLoading(false)
@@ -170,6 +174,19 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
         <div className="p-3.5 rounded-xl bg-slate-900/80 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-3 animate-pulse">
           <Loader2 className="h-4 w-4 animate-spin text-amber-400 shrink-0" />
           <span className="font-mono text-[11px]">{statusMessage}</span>
+        </div>
+      )}
+
+      {/* ── ERROR MESSAGE BANNER ── */}
+      {errorMessage && !loading && (
+        <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-200 flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+            <span className="font-mono text-[11px]">{errorMessage}</span>
+          </div>
+          <button onClick={() => setErrorMessage("")} className="text-zinc-500 hover:text-zinc-200 cursor-pointer">
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 

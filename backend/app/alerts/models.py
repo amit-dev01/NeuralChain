@@ -56,6 +56,7 @@ class AlertResponse(AlertBase):
     id: str
     dataset_id: str
     status: AlertStatus
+    shap_values: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
 
@@ -94,6 +95,7 @@ class AlertSummaryStats(BaseModel):
 
 class PaginatedAlerts(BaseModel):
     alerts: List[AlertResponse]
+    items: Optional[List[AlertResponse]] = None
     total: int
     page: int
     pages: int

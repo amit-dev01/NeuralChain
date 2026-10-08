@@ -29,7 +29,6 @@ import {
   Select, SelectTrigger, SelectContent,
   SelectItem, SelectValue,
 } from "@/components/ui/select"
-import { MOCK_GRAPH } from "@/data/graphMockData"
 import { getGraphNodes } from "@/api/client"
 
 cytoscape.use(coseBilkent)
@@ -313,7 +312,7 @@ export default function GraphPage() {
   const [highlightIds, setHighlightIds] = useState(new Set())
   const [toast, setToast]               = useState(null)
   const [physicsOff, setPhysicsOff]     = useState(false)
-  const [graphData, setGraphData]       = useState(MOCK_GRAPH)
+  const [graphData, setGraphData]       = useState({ nodes: [], links: [] })
 
   const showToast = useCallback((msg) => {
     setToast(msg); setTimeout(() => setToast(null), 3000)
@@ -386,20 +385,20 @@ export default function GraphPage() {
     })
   }, [showToast])
 
-  // Live node query on search or refresh
+  // Live node query on mount, search, or refresh
   useEffect(() => {
-    if (!search.trim() || search.length < 10) return
     let active = true
+    const target = search.trim()
     const timeout = setTimeout(async () => {
       try {
-        const live = await getGraphNodes(search.trim(), 2, riskRange[0])
-        if (active && live?.nodes?.length > 0) {
+        const live = await getGraphNodes(target || undefined, 2, riskRange[0])
+        if (active && live?.nodes) {
           setGraphData(live)
         }
       } catch (err) {
-        console.warn("Neo4j query error:", err)
+        console.warn("Graph query error:", err)
       }
-    }, 500)
+    }, target ? 400 : 50)
     return () => { active = false; clearTimeout(timeout) }
   }, [search, riskRange])
 
@@ -411,7 +410,7 @@ export default function GraphPage() {
 
   // ── Filtered graph data ──
   const { nodes: filteredNodes, links: filteredLinks } = useMemo(() => {
-    const nodes = (graphData?.nodes || MOCK_GRAPH.nodes).filter(n => {
+    const nodes = (graphData?.nodes || []).filter(n => {
       if (!nodeTypes[n.type]) return false
       const nodeRisk = typeof n.risk === 'number' ? n.risk : (typeof n.risk_score === 'number' ? n.risk_score : 0.2)
       if (nodeRisk < riskRange[0] || nodeRisk > riskRange[1]) return false
@@ -422,7 +421,7 @@ export default function GraphPage() {
       return true
     })
     const nodeSet = new Set(nodes.map(n => n.id))
-    const links = (graphData?.links || MOCK_GRAPH.links).filter(l => {
+    const links = (graphData?.links || []).filter(l => {
       const src = typeof l.source === "object" ? l.source.id : l.source
       const dst = typeof l.target === "object" ? l.target.id : l.target
       return nodeSet.has(src) && nodeSet.has(dst) && edgeTypes[l.type]
@@ -920,6 +919,27 @@ export default function GraphPage() {
                   width={window.innerWidth - 280 - (selectedNode ? 384 : 0)}
                   height={window.innerHeight - 56}
                 />
+                {filteredNodes.length === 0 && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 p-6 text-center">
+                    <div className="editorial-surface rounded-2xl p-6 border border-white/10 shadow-2xl max-w-md pointer-events-auto space-y-3">
+                      <div className="h-10 w-10 mx-auto rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                        <Network className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-display text-lg text-white font-normal">No Graph Topology Loaded</h3>
+                      <p className="text-xs text-zinc-400 font-light leading-relaxed">
+                        Ingest any Bitcoin address or dataset using the top bar to reconstruct the on-chain UTXO ego-network topology.
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowInvestigateBar(true)}
+                        className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-medium text-xs rounded-xl"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        Instant Target Lookup
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Minimap */}
