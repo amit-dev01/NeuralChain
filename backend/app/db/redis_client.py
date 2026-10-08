@@ -20,10 +20,15 @@ except Exception:
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Redis connection pool
+extra_pool_kwargs = {}
+if REDIS_URL.startswith("rediss://"):
+    extra_pool_kwargs["ssl_cert_reqs"] = None
+
 pool = redis.ConnectionPool.from_url(
     REDIS_URL,
     max_connections=20,
     decode_responses=True,
+    **extra_pool_kwargs,
 )
 
 # Constants
