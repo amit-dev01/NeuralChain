@@ -251,17 +251,20 @@ def investigate_address(
     except Exception:
         pass
 
-    # 8. Trigger ML detection pipeline in background if auto_run_ml is enabled
+    # 8. Trigger ML detection pipeline in background thread if auto_run_ml is enabled
     if req.auto_run_ml:
-        try:
-            from app.ingest.tasks import run_all_models_task
+        def _bg_ml_runner():
             try:
-                run_all_models_task.delay(str(dataset.id))
-            except Exception:
-                import threading
-                threading.Thread(target=run_all_models_task, args=(str(dataset.id),), daemon=True).start()
-        except Exception as ml_err:
-            logger.info("Auto ML model trigger skipped: %s", ml_err)
+                from app.ingest.tasks import run_all_models_task
+                try:
+                    run_all_models_task.delay(str(dataset.id))
+                except Exception:
+                    run_all_models_task(str(dataset.id))
+            except Exception as ml_err:
+                logger.info("Auto ML background trigger error: %s", ml_err)
+
+        import threading
+        threading.Thread(target=_bg_ml_runner, daemon=True).start()
 
     # 9. Gemma 4 / Gemini AI Intelligence Brief
     ai_summary = None
