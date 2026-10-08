@@ -21,7 +21,7 @@ import {
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { investigateAddress } from "@/api/client"
+import { investigateAddress, getLatestInvestigation } from "@/api/client"
 
 const PRESETS = [
   { label: "Silk Road Seizure", address: "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX", type: "Darknet" },
@@ -32,10 +32,11 @@ const PRESETS = [
 
 export default function AddressLookupCard({ onAnalyzed, className = "" }) {
   const navigate = useNavigate()
-  const [addressInput, setAddressInput] = useState("")
+  const cached = getLatestInvestigation()
+  const [addressInput, setAddressInput] = useState(cached?.address || "")
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState("")
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState(cached || null)
   const [copied, setCopied] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
 

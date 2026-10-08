@@ -29,7 +29,8 @@ import {
   Select, SelectTrigger, SelectContent,
   SelectItem, SelectValue,
 } from "@/components/ui/select"
-import { getGraphNodes } from "@/api/client"
+import { getGraphNodes, getLatestInvestigation, buildGraphFromInvestigation } from "@/api/client"
+import { MOCK_GRAPH } from "@/data/graphMockData"
 
 cytoscape.use(coseBilkent)
 
@@ -312,7 +313,12 @@ export default function GraphPage() {
   const [highlightIds, setHighlightIds] = useState(new Set())
   const [toast, setToast]               = useState(null)
   const [physicsOff, setPhysicsOff]     = useState(false)
-  const [graphData, setGraphData]       = useState({ nodes: [], links: [] })
+  const latestCached = getLatestInvestigation()
+  const initialData = latestCached
+    ? buildGraphFromInvestigation(latestCached)
+    : MOCK_GRAPH
+
+  const [graphData, setGraphData]       = useState(initialData)
 
   const showToast = useCallback((msg) => {
     setToast(msg); setTimeout(() => setToast(null), 3000)
@@ -325,64 +331,8 @@ export default function GraphPage() {
     setSearch(result.address)
     setShowInvestigateBar(false)
     showToast(`Investigated target: ${result.address.slice(0, 10)}... (Risk: ${(result.risk_score * 100).toFixed(0)}%)`)
-
-    setGraphData(prev => {
-      const existingNodes = prev?.nodes || []
-      const existingLinks = prev?.links || []
-      if (existingNodes.some(n => n.id === result.address || n.fullLabel === result.address)) {
-        return prev
-      }
-
-      const centerNode = {
-        id: result.address,
-        type: "wallet",
-        label: result.address.slice(0, 16) + "…",
-        fullLabel: result.address,
-        risk: result.risk_score,
-        cluster: 2,
-        totalSent: result.total_sent_btc,
-        totalReceived: result.total_received_btc,
-        txCount: result.tx_count,
-        firstSeen: "2024-01-01 00:00",
-        lastSeen: new Date().toISOString().slice(0, 16).replace("T", " "),
-        entityLabel: result.typologies?.[0]?.replace("_", " ") || "Target Subject",
-        anomalyFlags: result.risk_score > 0.6 ? ["LIVE_ONCHAIN_SUBJECT"] : [],
-        shapValues: [
-          { feature: "velocity", value: 0.45 },
-          { feature: "fan_out", value: 0.32 },
-          { feature: "addr_reuse", value: 0.28 },
-          { feature: "peel_chain", value: 0.21 },
-        ],
-        shapSummary: result.ai_summary,
-      }
-
-      const txNodes = (result.transactions || []).map((t, i) => ({
-        id: t.txid,
-        type: "transaction",
-        label: t.txid.slice(0, 12) + "…",
-        fullLabel: t.txid,
-        risk: result.risk_score,
-        amount: t.amount_btc,
-        amountUSD: Math.round(t.amount_btc * 68000),
-        fee: t.fee_btc,
-        timestamp: t.timestamp,
-        anomalyFlags: ["ONCHAIN_TX"],
-        inputAddresses: [result.address],
-        outputAddresses: [`out_dest_${i}`],
-      }))
-
-      const txLinks = (result.transactions || []).map(t => ({
-        source: result.address,
-        target: t.txid,
-        type: "SENT",
-        amount: t.amount_btc,
-      }))
-
-      return {
-        nodes: [centerNode, ...txNodes, ...existingNodes],
-        links: [...txLinks, ...existingLinks],
-      }
-    })
+    const updatedGraph = buildGraphFromInvestigation(result)
+    setGraphData(updatedGraph)
   }, [showToast])
 
   // Live node query on mount, search, or refresh
@@ -392,7 +342,7 @@ export default function GraphPage() {
     const timeout = setTimeout(async () => {
       try {
         const live = await getGraphNodes(target || undefined, 2, riskRange[0])
-        if (active && live?.nodes) {
+        if (active && live?.nodes && live.nodes.length > 0) {
           setGraphData(live)
         }
       } catch (err) {
@@ -402,6 +352,24 @@ export default function GraphPage() {
     return () => { active = false; clearTimeout(timeout) }
   }, [search, riskRange])
 
+  // Auto-center on searched target node
+  useEffect(() => {
+    if (!search.trim() || !filteredNodes.length || !fgRef.current) return
+    const s = search.trim().toLowerCase()
+    const target = filteredNodes.find(n =>
+      n.id?.toLowerCase() === s ||
+      n.fullLabel?.toLowerCase() === s ||
+      n.label?.toLowerCase().includes(s)
+    )
+    if (target && typeof target.x === 'number') {
+      const t = setTimeout(() => {
+        fgRef.current?.centerAt(target.x, target.y, 600)
+        fgRef.current?.zoom(2.0, 600)
+      }, 400)
+      return () => clearTimeout(t)
+    }
+  }, [search, filteredNodes])
+
   // Turn off physics after 3s
   useEffect(() => {
     const t = setTimeout(() => setPhysicsOff(true), 3000)
@@ -410,22 +378,53 @@ export default function GraphPage() {
 
   // ── Filtered graph data ──
   const { nodes: filteredNodes, links: filteredLinks } = useMemo(() => {
-    const nodes = (graphData?.nodes || []).filter(n => {
+    const rawNodes = graphData?.nodes || []
+    const rawLinks = graphData?.links || []
+    const searchTrimmed = search.trim().toLowerCase()
+
+    // 1. Identify directly matching nodes
+    const directMatches = new Set()
+    if (searchTrimmed) {
+      rawNodes.forEach(n => {
+        if (
+          n.label?.toLowerCase().includes(searchTrimmed) ||
+          n.fullLabel?.toLowerCase().includes(searchTrimmed) ||
+          n.id?.toLowerCase().includes(searchTrimmed)
+        ) {
+          directMatches.add(n.id)
+        }
+      })
+    }
+
+    // 2. Expand to 1-hop connected neighbors so transactions & links are NEVER pruned out
+    const egoNeighborhood = new Set(directMatches)
+    if (directMatches.size > 0) {
+      rawLinks.forEach(l => {
+        const s = typeof l.source === 'object' ? l.source.id : l.source
+        const t = typeof l.target === 'object' ? l.target.id : l.target
+        if (directMatches.has(s)) egoNeighborhood.add(t)
+        if (directMatches.has(t)) egoNeighborhood.add(s)
+      })
+    }
+
+    // 3. Filter nodes by type, risk, and search neighborhood
+    const nodes = rawNodes.filter(n => {
       if (!nodeTypes[n.type]) return false
       const nodeRisk = typeof n.risk === 'number' ? n.risk : (typeof n.risk_score === 'number' ? n.risk_score : 0.2)
       if (nodeRisk < riskRange[0] || nodeRisk > riskRange[1]) return false
-      if (search.trim()) {
-        const q = search.toLowerCase()
-        return n.label?.toLowerCase().includes(q) || n.fullLabel?.toLowerCase().includes(q)
+      if (searchTrimmed && directMatches.size > 0) {
+        return egoNeighborhood.has(n.id)
       }
       return true
     })
+
     const nodeSet = new Set(nodes.map(n => n.id))
-    const links = (graphData?.links || []).filter(l => {
+    const links = rawLinks.filter(l => {
       const src = typeof l.source === "object" ? l.source.id : l.source
       const dst = typeof l.target === "object" ? l.target.id : l.target
       return nodeSet.has(src) && nodeSet.has(dst) && edgeTypes[l.type]
     })
+
     return { nodes, links }
   }, [graphData, nodeTypes, edgeTypes, riskRange, search])
 
