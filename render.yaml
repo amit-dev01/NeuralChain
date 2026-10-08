@@ -1,15 +1,15 @@
 services:
+  # --------------------------------------------------------------------------
+  # 1. FastAPI Web Backend
+  # --------------------------------------------------------------------------
   - type: web
     name: neuralchain-backend
-    runtime: python
-    rootDir: backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
@@ -18,72 +18,68 @@ services:
         value: models
       - key: SECRET_KEY
         generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      # Database: Supabase PostgreSQL
       - key: DATABASE_URL
-        fromDatabase:
-          name: neuralchain-postgres
-          property: connectionString
+        sync: false
+      # Cache & Queue: Upstash Redis
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: neuralchain-redis
-          property: connectionString
+        sync: false
       - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: neuralchain-redis
-          property: connectionString
+        sync: false
       - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: neuralchain-redis
-          property: connectionString
+        sync: false
+      # Graph Database: Neo4j AuraDB
       - key: NEO4J_URI
         sync: false
       - key: NEO4J_USER
-        value: neo4j
+        sync: false
       - key: NEO4J_PASSWORD
         sync: false
+      # Supabase API
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # Google GenAI / Gemini API
+      - key: GEMINI_API_KEY
+        sync: false
 
+  # --------------------------------------------------------------------------
+  # 2. Celery Worker (Background tasks & ML jobs)
+  # --------------------------------------------------------------------------
   - type: worker
     name: neuralchain-celery-worker
-    runtime: python
-    rootDir: backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.celery_app.celery_app worker --loglevel=info
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: celery -A app.core.celery_app.celery_app worker --loglevel=info
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
       - key: MODEL_STORE_PATH
         value: models
       - key: DATABASE_URL
-        fromDatabase:
-          name: neuralchain-postgres
-          property: connectionString
+        sync: false
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: neuralchain-redis
-          property: connectionString
+        sync: false
       - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: neuralchain-redis
-          property: connectionString
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
       - key: NEO4J_URI
         sync: false
       - key: NEO4J_USER
-        value: neo4j
+        sync: false
       - key: NEO4J_PASSWORD
         sync: false
-
-databases:
-  - name: neuralchain-postgres
-    plan: free
-    databaseName: neuralchain_db
-    user: neuralchain
-
-redis:
-  - name: neuralchain-redis
-    plan: free
-    ipAllowList: []
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
