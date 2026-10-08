@@ -6,7 +6,10 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from typing import Any, List, Tuple
 
-from dateutil import parser as date_parser
+try:
+    from dateutil import parser as date_parser
+except ImportError:
+    date_parser = None
 from pydantic import ValidationError
 
 from app.ingest.models import RowError, TimestampFormat, TransactionRecord
@@ -40,7 +43,14 @@ def _parse_timestamp(value: Any, fmt: TimestampFormat) -> datetime:
             try:
                 return datetime.fromisoformat(val_str.replace("Z", "+00:00"))
             except Exception:
-                return date_parser.parse(val_str)
+                if date_parser is not None:
+                    return date_parser.parse(val_str)
+                for str_fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+                    try:
+                        return datetime.strptime(val_str, str_fmt).replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        pass
+                raise ValueError(f"Unable to parse ISO-8601 timestamp '{val_str}'")
     except Exception as e:
         raise ValueError(f"Failed to parse timestamp '{value}' with format {fmt}: {e}")
 

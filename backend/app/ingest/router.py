@@ -247,7 +247,19 @@ def investigate_address(
     except Exception:
         pass
 
-    # 8. Gemma 4 AI Analysis
+    # 8. Trigger ML detection pipeline in background if auto_run_ml is enabled
+    if req.auto_run_ml:
+        try:
+            from app.ingest.tasks import run_all_models_task
+            try:
+                run_all_models_task.delay(str(dataset.id))
+            except Exception:
+                import threading
+                threading.Thread(target=run_all_models_task, args=(str(dataset.id),), daemon=True).start()
+        except Exception as ml_err:
+            logger.info("Auto ML model trigger skipped: %s", ml_err)
+
+    # 9. Gemma 4 / Gemini AI Intelligence Brief
     ai_summary = None
     if is_gemini_configured():
         try:
@@ -261,10 +273,13 @@ def investigate_address(
                 f"Detected Typologies: {', '.join(typologies)}\n"
                 f"Provide a 2-paragraph executive forensic intelligence summary explaining the threat posture, behavioral anomaly patterns, and recommended next steps for investigators under Indian Evidence Act §65B."
             )
-            ai_res = generate_content_with_fallback(prompt)
-            ai_summary = ai_res.get("text")
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(generate_content_with_fallback, prompt)
+                ai_res = future.result(timeout=3.5)
+                ai_summary = ai_res.get("text")
         except Exception as ai_err:
-            logger.warning("Gemma 4 profile generation failed: %s", ai_err)
+            logger.warning("AI forensic profile generation timed out or failed: %s", ai_err)
 
     if not ai_summary:
         ai_summary = (
