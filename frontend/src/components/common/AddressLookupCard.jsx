@@ -25,7 +25,7 @@ import { investigateAddress } from "@/api/client"
 
 const PRESETS = [
   { label: "Silk Road Seizure", address: "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX", type: "Darknet" },
-  { label: "Bitfinex Hack", address: "1C2DHN5jXnswBqE7c1b5H5UqV5R3Yv3Wb", type: "Heist" },
+  { label: "Mt. Gox Hack", address: "1FeexV6bAHb8ybZjqQMjJrcCrHGW9sb6uF", type: "Heist" },
   { label: "WannaCry Ransomware", address: "115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn", type: "Ransomware" },
   { label: "Satoshi Genesis", address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", type: "Benchmark" },
 ]

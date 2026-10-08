@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from typing import Any, List, Tuple
 
-import pandas as pd
 from dateutil import parser as date_parser
 from pydantic import ValidationError
 
