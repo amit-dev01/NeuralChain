@@ -24,4 +24,5 @@ data/geoip/*.mmdb
 !backend/models/*.png
 
 .DS_Store
-
+*.db
+backend/data/

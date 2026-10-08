@@ -15,6 +15,7 @@ import {
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import AppHeader from "@/components/common/AppHeader"
+import AddressLookupCard from "@/components/common/AddressLookupCard"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -319,8 +320,19 @@ export default function IngestPage() {
             Upload Transaction <span className="font-serif italic text-zinc-400 font-light">Dataset</span>
           </h1>
           <p className="text-xs text-zinc-400 mt-1 max-w-xl font-light tracking-wide">
-            Accepts CSV, JSON, or XML bulk files. Schema is validated automatically. Duplicates are deduplicated by TXID.
+            Investigate a single Bitcoin address live on-chain or ingest raw CSV/JSON/XML transaction batches.
           </p>
+        </div>
+
+        {/* ── SECTION 0: INSTANT ADDRESS LOOKUP (NO CSV NEEDED) ── */}
+        <AddressLookupCard />
+
+        <div className="relative flex py-2 items-center">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="flex-shrink mx-4 text-xs font-mono text-zinc-500 uppercase tracking-widest">
+            OR UPLOAD BULK CASE EVIDENCE
+          </span>
+          <div className="flex-grow border-t border-white/10"></div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">

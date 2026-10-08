@@ -1,7 +1,10 @@
+import logging
 import os
 import uuid
 from datetime import datetime
 from typing import Generator
+
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from sqlalchemy import (
@@ -44,9 +47,14 @@ connect_args = {}
 if "supabase.co" in DATABASE_URL or "pooler.supabase.com" in DATABASE_URL or "sslmode=require" in DATABASE_URL:
     connect_args["sslmode"] = "require"
 
+data_dir = os.path.join(os.getcwd(), "data")
+os.makedirs(data_dir, exist_ok=True)
+sqlite_fallback_path = os.path.join(data_dir, "neuralchain.db").replace("\\", "/")
+sqlite_url = f"sqlite:///{sqlite_fallback_path}"
+
 try:
     if DATABASE_URL.startswith("sqlite"):
-        engine = create_engine(DATABASE_URL)
+        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     else:
         engine = create_engine(
             DATABASE_URL,
@@ -56,24 +64,29 @@ try:
             connect_args=connect_args,
             echo=False,
         )
+        # Verify connection
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
 except Exception as e:
-    engine = create_engine("sqlite:///:memory:")
+    logger.info("PostgreSQL unavailable (%s); falling back to persistent SQLite: %s", e, sqlite_url)
+    engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
 def init_db() -> None:
-    """Auto-create tables in PostgreSQL / Supabase if they don't already exist."""
+    """Auto-create tables in database if they don't already exist."""
     try:
         Base.metadata.create_all(bind=engine)
+        logger.info("Database schema initialized successfully")
     except Exception as exc:
-        pass
-
+        logger.warning("Database schema init warning: %s", exc)
 
 
 def get_db() -> Generator:
     """Yield a database session and ensure clean close."""
+    init_db()
     db = SessionLocal()
     try:
         yield db

@@ -10,6 +10,7 @@ import {
   Tooltip, ResponsiveContainer,
 } from "recharts"
 import AppHeader from "@/components/common/AppHeader"
+import AddressLookupCard from "@/components/common/AddressLookupCard"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -248,6 +249,9 @@ export default function OverviewPage() {
             ))}
           </div>
         </section>
+
+        {/* ── SECTION 1.5: TARGET ADDRESS INVESTIGATION ── */}
+        <AddressLookupCard />
 
         {/* ── SECTION 2 + 3: TABLE + MODEL SIDEBAR ── */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6" aria-label="Alerts and Model Status">

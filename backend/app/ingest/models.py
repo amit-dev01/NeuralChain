@@ -103,3 +103,25 @@ class IngestStatusResponse(BaseModel):
     progress: int  # 0-100
     message: str
     dataset_id: Optional[str] = None
+
+
+class AddressLookupRequest(BaseModel):
+    address: str = Field(..., min_length=14, max_length=95, description="Bitcoin mainnet address")
+    limit: int = Field(25, ge=1, le=100, description="Maximum transactions to retrieve")
+    auto_run_ml: bool = Field(True, description="Automatically calculate risk and run ML models")
+
+
+class AddressLookupResponse(BaseModel):
+    address: str
+    script_type: str
+    tx_count: int
+    total_received_btc: float
+    total_sent_btc: float
+    final_balance_btc: float
+    risk_score: float
+    risk_level: str
+    typologies: List[str]
+    transactions: List[dict]
+    ai_summary: Optional[str] = None
+    dataset_id: Optional[str] = None
+    created_at: str
