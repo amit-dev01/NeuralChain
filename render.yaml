@@ -5,8 +5,8 @@ services:
   - type: web
     name: neuralchain-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
     plan: free
     healthCheckPath: /health
     envVars:
@@ -54,8 +54,8 @@ services:
   - type: worker
     name: neuralchain-celery-worker
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
     dockerCommand: celery -A app.celery_app.celery_app worker --loglevel=info
     plan: free
     envVars:
