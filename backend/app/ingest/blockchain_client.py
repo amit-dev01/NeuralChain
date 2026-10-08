@@ -255,20 +255,20 @@ def _fetch_from_blockcypher(
 
                 in_addrs: List[str] = []
                 in_amts: List[float] = []
-                for inp in tx.get("inputs", []):
-                    for a in inp.get("addresses", []):
+                for inp in (tx.get("inputs") or []):
+                    for a in (inp.get("addresses") or []):
                         if a:
                             in_addrs.append(a)
-                    val = inp.get("output_value", 0)
+                    val = inp.get("output_value") or 0
                     in_amts.append(round(val / 100_000_000.0, 8))
 
                 out_addrs: List[str] = []
                 out_amts: List[float] = []
-                for out in tx.get("outputs", []):
-                    for a in out.get("addresses", []):
+                for out in (tx.get("outputs") or []):
+                    for a in (out.get("addresses") or []):
                         if a:
                             out_addrs.append(a)
-                    val = out.get("value", 0)
+                    val = out.get("value") or 0
                     out_amts.append(round(val / 100_000_000.0, 8))
 
                 fee_sats = tx.get("fees", 0)
