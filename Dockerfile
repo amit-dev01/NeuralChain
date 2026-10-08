@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Set environment variables for production
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
+    PYTHONPATH=/app:/app/backend \
     PORT=8000
 
 WORKDIR /app

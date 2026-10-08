@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Set environment variables for production execution
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
+    PYTHONPATH=/app:/app/backend \
     PORT=8000
 
 WORKDIR /app
@@ -22,15 +22,15 @@ RUN pip install --no-cache-dir --upgrade pip
 # Pre-install CPU version of PyTorch to keep image lightweight and avoid 3GB+ CUDA wheels
 RUN pip install --no-cache-dir torch==2.3.0 --index-url https://download.pytorch.org/whl/cpu
 
-# Copy and install application dependencies
-COPY requirements.txt .
+# Copy and install application dependencies from backend
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create runtime directories for data, GeoIP, and models
 RUN mkdir -p /app/data/geoip /app/data/mlruns /app/models
 
-# Copy application source code
-COPY . .
+# Copy backend application source code directly to /app
+COPY backend/ .
 
 # Expose default port (Render will bind via $PORT)
 EXPOSE 8000
