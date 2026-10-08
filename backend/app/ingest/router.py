@@ -18,8 +18,11 @@ from sqlalchemy.orm import Session
 
 from datetime import datetime, timezone
 
+import concurrent.futures
 from app.celery_app import celery_app
 from app.core.gemini_client import generate_content_with_fallback, is_gemini_configured
+
+_AI_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 from app.db.postgres import Alert, Dataset, Entity, Transaction, get_db
 from app.db.redis_client import get_task_progress
 from app.ingest.blockchain_client import fetch_address_report, fetch_address_transactions
@@ -280,11 +283,9 @@ def investigate_address(
                 f"Detected Typologies: {', '.join(typologies)}\n"
                 f"Provide a 2-paragraph executive forensic intelligence summary explaining the threat posture, behavioral anomaly patterns, and recommended next steps for investigators under Indian Evidence Act §65B."
             )
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(generate_content_with_fallback, prompt)
-                ai_res = future.result(timeout=3.5)
-                ai_summary = ai_res.get("text")
+            future = _AI_EXECUTOR.submit(generate_content_with_fallback, prompt)
+            ai_res = future.result(timeout=3.0)
+            ai_summary = ai_res.get("text")
         except Exception as ai_err:
             logger.warning("AI forensic profile generation timed out or failed: %s", ai_err)
 

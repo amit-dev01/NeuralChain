@@ -75,10 +75,17 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+_db_initialized = False
+
+
 def init_db() -> None:
     """Auto-create tables in database if they don't already exist."""
+    global _db_initialized
+    if _db_initialized:
+        return
     try:
         Base.metadata.create_all(bind=engine)
+        _db_initialized = True
         logger.info("Database schema initialized successfully")
     except Exception as exc:
         logger.warning("Database schema init warning: %s", exc)
@@ -86,7 +93,8 @@ def init_db() -> None:
 
 def get_db() -> Generator:
     """Yield a database session and ensure clean close."""
-    init_db()
+    if not _db_initialized:
+        init_db()
     db = SessionLocal()
     try:
         yield db
