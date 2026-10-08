@@ -1,8 +1,15 @@
 import logging
+import socket
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 import httpx
 from pydantic import BaseModel
+
+# Force IPv4 socket resolution to prevent Linux [Errno 101] Network is unreachable on Docker/Render
+_orig_getaddrinfo = socket.getaddrinfo
+def _getaddrinfo_ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _getaddrinfo_ipv4_only
 
 from app.ingest.models import ScriptType, TransactionRecord
 
@@ -320,10 +327,11 @@ def fetch_address_report(
     import concurrent.futures
 
     tasks = [
-        lambda: _fetch_from_blockcypher(clean_addr, limit=limit, timeout=timeout),
-        lambda: _fetch_from_mempool(clean_addr, base_url="https://mempool.space/api", limit=limit, timeout=timeout),
-        lambda: _fetch_from_blockchain_info(clean_addr, limit=limit, timeout=timeout),
-        lambda: _fetch_from_mempool(clean_addr, base_url="https://blockstream.info/api", limit=limit, timeout=timeout),
+        lambda: _fetch_from_mempool(clean_addr, base_url="https://blockstream.info/api", limit=limit, timeout=3.5),
+        lambda: _fetch_from_blockcypher(clean_addr, limit=limit, timeout=3.5),
+        lambda: _fetch_from_mempool(clean_addr, base_url="https://mempool.emzy.de/api", limit=limit, timeout=3.5),
+        lambda: _fetch_from_blockchain_info(clean_addr, limit=limit, timeout=3.5),
+        lambda: _fetch_from_mempool(clean_addr, base_url="https://mempool.space/api", limit=limit, timeout=2.0),
     ]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(tasks)) as executor:

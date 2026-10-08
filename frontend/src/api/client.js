@@ -12,7 +12,7 @@ const API_BASE = RAW_BASE ? `${RAW_BASE}/api/v1` : '/api/v1'
 
 export const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -176,7 +176,7 @@ export async function uploadDataset(formData) {
 
 export async function investigateAddress(address, limit = 25) {
   const clean = (address || '').trim()
-  const res = await api.post('/ingest/address', { address: clean, limit, auto_run_ml: true })
+  const res = await api.post('/ingest/address', { address: clean, limit, auto_run_ml: true }, { timeout: 60000 })
   return res.data
 }
 

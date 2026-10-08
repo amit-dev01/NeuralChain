@@ -1,5 +1,12 @@
 import logging
+import socket
 from datetime import datetime, timezone
+
+# Force IPv4 socket resolution to prevent Linux [Errno 101] Network is unreachable on Docker/Render
+_orig_getaddrinfo = socket.getaddrinfo
+def _getaddrinfo_ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _getaddrinfo_ipv4_only
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError

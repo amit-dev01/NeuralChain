@@ -46,7 +46,7 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
     setAddressInput(addr)
     setLoading(true)
     setErrorMessage("")
-    setStatusMessage("Querying live Bitcoin mainnet via Mempool explorer...")
+    setStatusMessage("Querying live Bitcoin mainnet via Blockstream & BlockCypher...")
 
     setTimeout(() => {
       setStatusMessage("Extracting UTXO graph & scoring 4-Tier ML Ensemble...")
@@ -107,7 +107,7 @@ export default function AddressLookupCard({ onAnalyzed, className = "" }) {
 
         <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-mono">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Mempool Live Sync
+          Mainnet Live Sync
         </div>
       </div>
 
