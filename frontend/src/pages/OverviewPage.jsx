@@ -30,6 +30,15 @@ const DEFAULT_KPI_DATA = [
   { label: "Models Running", value: 4, icon: BrainCircuit, color: "emerald-500", border: "border-l-emerald-500", change: "Active", up: true },
 ]
 
+const DEFAULT_SPARKLINE_DATA = [
+  { time: "00:00", count: 120 },
+  { time: "04:00", count: 240 },
+  { time: "08:00", count: 480 },
+  { time: "12:00", count: 320 },
+  { time: "16:00", count: 650 },
+  { time: "20:00", count: 420 },
+]
+
 const DEFAULT_MODEL_STATUS = [
   { name: "Isolation Forest",    status: "Active", meta: "Last run: 2 min ago",   stat: "Accuracy 97.3%" },
   { name: "Autoencoder",         status: "Active", meta: "Last run: 2 min ago",   stat: "Loss 0.0041"    },
@@ -175,7 +184,7 @@ export default function OverviewPage() {
         count: d.tx_count ?? d.count ?? 120,
       }))
     }
-    return DEFAULT_ALERT_ROWS
+    return DEFAULT_SPARKLINE_DATA
   }, [rateData])
 
   // 4. Live ML Models Query

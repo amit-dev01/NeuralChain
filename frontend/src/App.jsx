@@ -10,6 +10,7 @@ import GeoMapPage from './pages/GeoMapPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
 import DocsPage from './pages/DocsPage.jsx'
 import ModelsPage from './pages/ModelsPage.jsx'
+import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -21,7 +22,7 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <ScrollToTop />
       <Routes>
         {/* Landing page */}
@@ -44,6 +45,6 @@ export default function App() {
         {/* Fallback route */}
         <Route path="*"              element={<OverviewPage />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   )
 }

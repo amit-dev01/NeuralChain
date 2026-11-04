@@ -12,6 +12,8 @@ import {
   Sparkles,
   BookOpen,
   BrainCircuit,
+  Menu,
+  X,
 } from "lucide-react"
 import AICopilotDrawer from "./AICopilotDrawer"
 
@@ -30,6 +32,7 @@ const NAV_LINKS = [
 export default function AppHeader({ rightContent }) {
   const location = useLocation()
   const [isCopilotOpen, setIsCopilotOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <>
@@ -45,7 +48,7 @@ export default function AppHeader({ rightContent }) {
             </span>
           </Link>
 
-          {/* ── Editorial Pill Navigation Links ── */}
+          {/* ── Editorial Pill Navigation Links (Desktop) ── */}
           <nav className="hidden md:flex items-center gap-1.5 flex-1" aria-label="Main navigation">
             {NAV_LINKS.map(({ label, to, icon: Icon }) => {
               const isActive = location.pathname === to
@@ -89,8 +92,43 @@ export default function AppHeader({ rightContent }) {
                 All Systems Operational
               </span>
             </div>
+
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden flex items-center justify-center p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* ── Mobile Navigation Drawer ── */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-white/10 bg-slate-950/95 backdrop-blur-2xl px-6 py-4 space-y-2">
+            <nav className="grid grid-cols-2 gap-2" aria-label="Mobile navigation">
+              {NAV_LINKS.map(({ label, to, icon: Icon }) => {
+                const isActive = location.pathname === to
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      isActive
+                        ? "bg-white/10 text-white font-semibold border border-white/20"
+                        : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? "text-amber-400" : "text-zinc-500"}`} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Persistent AI Copilot Drawer */}
